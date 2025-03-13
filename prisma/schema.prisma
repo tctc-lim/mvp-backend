@@ -1,0 +1,90 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User roles enum
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  ZONAL_COORDINATOR
+  CELL_LEADER
+  FOLLOW_UP_TEAM
+}
+
+// User model for authentication and authorization
+model User {
+  id        String    @id @default(uuid())
+  email     String    @unique
+  password  String
+  role      UserRole
+  name      String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  zone      Zone?     @relation("ZonalCoordinator")
+  cell      Cell?     @relation("CellLeader")
+}
+
+// Zone model for church zones
+model Zone {
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+  coordinator User      @relation("ZonalCoordinator", fields: [userId], references: [id])
+  userId      String    @unique
+  cells       Cell[]
+  members     Member[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// Cell model for church cells
+model Cell {
+  id        String    @id @default(uuid())
+  name      String
+  leader    User      @relation("CellLeader", fields: [userId], references: [id])
+  userId    String    @unique
+  zone      Zone      @relation(fields: [zoneId], references: [id])
+  zoneId    String
+  members   Member[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+// Member status enum
+enum MemberStatus {
+  FIRST_TIMER
+  SECOND_TIMER
+  NEW_CONVERT
+  FULL_MEMBER
+}
+
+// Member model for church members
+model Member {
+  id            String       @id @default(uuid())
+  name          String
+  email         String?      @unique
+  phone         String
+  address       String
+  gender        String
+  status        MemberStatus @default(FIRST_TIMER)
+  zone          Zone         @relation(fields: [zoneId], references: [id])
+  zoneId        String
+  cell          Cell?        @relation(fields: [cellId], references: [id])
+  cellId        String?
+  firstVisit    DateTime     @default(now())
+  lastVisit     DateTime     @default(now())
+  prayerRequest String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+}
