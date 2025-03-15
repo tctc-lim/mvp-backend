@@ -10,6 +10,7 @@ exports.AppModule = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const prisma_module_1 = require("./prisma/prisma.module");
+const auth_module_1 = require("./modules/auth/auth.module");
 const configuration_1 = require("./config/configuration");
 let AppModule = class AppModule {
 };
@@ -22,6 +23,7 @@ exports.AppModule = AppModule = __decorate([
                 load: [configuration_1.default],
             }),
             prisma_module_1.PrismaModule,
+            auth_module_1.AuthModule,
         ],
         controllers: [],
         providers: [],

@@ -17,7 +17,13 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "vercel-build": "npx prisma generate && npm run build",
+    "db:migrate:dev": "dotenv -e .env.development prisma migrate dev",
+    "db:migrate:prod": "dotenv -e .env.production prisma migrate deploy",
+    "db:sync": "npm run db:migrate:dev && npm run db:migrate:prod",
+    "db:studio:dev": "dotenv -e .env.development prisma studio",
+    "db:studio:prod": "dotenv -e .env.production prisma studio"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
