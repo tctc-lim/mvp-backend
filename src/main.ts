@@ -3,6 +3,14 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { config } from 'dotenv';
+
+// Load the appropriate .env file based on NODE_ENV
+config({
+  path: process.env.NODE_ENV === 'production'
+    ? '.env.production'
+    : '.env.development'
+});
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -34,10 +42,17 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, config);
 
-  // Custom Swagger UI options
+  // Serve static files from node_modules
+  app.useStaticAssets('node_modules/swagger-ui-dist', {
+    prefix: '/swagger-ui/',
+  });
+
+  // Update Swagger setup with correct paths
   SwaggerModule.setup('api-docs', app, document, {
-    customJs: '/swagger-ui-bundle.js',
-    customCssUrl: '/swagger-ui.css',
+    customJs: '/swagger-ui/swagger-ui-bundle.js',
+    customCssUrl: '/swagger-ui/swagger-ui.css',
+    customfavIcon: '/swagger-ui/favicon-32x32.png',
+    customSiteTitle: 'Church KYC API Documentation',
     swaggerOptions: {
       persistAuthorization: true,
     },
