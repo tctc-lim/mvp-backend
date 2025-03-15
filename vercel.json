@@ -15,7 +15,11 @@
     ],
     "routes": [
         {
-            "src": "/(.*)",
+            "src": "/api-docs/(.*)",
+            "dest": "src/main.ts"
+        },
+        {
+            "src": "/api/(.*)",
             "dest": "src/main.ts",
             "methods": [
                 "GET",
@@ -25,6 +29,10 @@
                 "PATCH",
                 "OPTIONS"
             ]
+        },
+        {
+            "src": "/(.*)",
+            "dest": "src/main.ts"
         }
     ]
 }

@@ -16,19 +16,45 @@ async function bootstrap() {
     forbidNonWhitelisted: true,
   }));
 
-  // Swagger setup
+  // Swagger Setup
   const config = new DocumentBuilder()
     .setTitle('Church KYC API')
-    .setDescription('The Church KYC Management API')
+    .setDescription('API documentation for Church KYC Management System')
     .setVersion('1.0')
-    .addBearerAuth()
+    .addTag('Auth', 'Authentication endpoints')
+    .addTag('Members', 'Member management endpoints')
+    .addTag('Followup', 'Follow-up management endpoints')
+    .addTag('Health', 'Health check endpoints')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        in: 'header'
+      },
+      'access-token'
+    )
     .build();
+
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api-docs', app, document);
+
+  // Custom Swagger UI options
+  const customOptions = {
+    customSiteTitle: 'Church KYC API Docs',
+    swaggerOptions: {
+      persistAuthorization: true,
+      docExpansion: 'none',
+      filter: true,
+      tagsSorter: 'alpha',
+    },
+  };
+
+  SwaggerModule.setup('api-docs', app, document, customOptions);
 
   // Enable CORS
   app.enableCors();
 
-  await app.listen(process.env.PORT || 3000);
+  const port = process.env.PORT || 3000;
+  await app.listen(port);
 }
 bootstrap();

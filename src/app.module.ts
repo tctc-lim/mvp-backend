@@ -5,6 +5,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { FollowupModule } from './modules/followup/followup.module';
 import { DepartmentModule } from './modules/department/department.module';
 import { MilestoneModule } from './modules/milestone/milestone.module';
+import { HealthModule } from './modules/health/health.module';
 import { configuration } from './config/configuration';
 
 @Module({
@@ -18,6 +19,7 @@ import { configuration } from './config/configuration';
     FollowupModule,
     DepartmentModule,
     MilestoneModule,
+    HealthModule,
   ],
   controllers: [],
   providers: [],
