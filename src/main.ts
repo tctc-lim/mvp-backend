@@ -47,12 +47,29 @@ async function bootstrap() {
     prefix: '/swagger-ui/',
   });
 
-  // Update Swagger setup with correct paths
+  // Update Swagger setup with CDN links
   SwaggerModule.setup('api-docs', app, document, {
-    customJs: '/swagger-ui/swagger-ui-bundle.js',
-    customCssUrl: '/swagger-ui/swagger-ui.css',
-    customfavIcon: '/swagger-ui/favicon-32x32.png',
     customSiteTitle: 'Church KYC API Documentation',
+    customCssUrl: 'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui.min.css',
+    customJs: 'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui-bundle.js',
+    customJsStr: `
+      window.onload = function() {
+        window.ui = SwaggerUIBundle({
+          url: '/api-docs-json',
+          dom_id: '#swagger-ui',
+          deepLinking: true,
+          presets: [
+            SwaggerUIBundle.presets.apis,
+            SwaggerUIBundle.SwaggerUIStandalonePreset
+          ],
+          plugins: [
+            SwaggerUIBundle.plugins.DownloadUrl
+          ],
+          layout: "BaseLayout",
+          persistAuthorization: true,
+        });
+      }
+    `,
     swaggerOptions: {
       persistAuthorization: true,
     },
