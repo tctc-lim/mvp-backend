@@ -225,7 +225,6 @@ curl -X POST http://localhost:3000/api/auth/login \
     "password": "password123"
   }'
 ```
-
 ## Development Workflow
 
 ### 1. Database Changes
@@ -451,5 +450,214 @@ export class SomeService {
 3. Include setup instructions
 4. Maintain README files
 `````
+
+
+
+
+## Recent Schema Updates (14/03/2025)
+
+### Enhanced Member Tracking System
+
+1. **Member Status System**
+   ```typescript
+   enum MemberStatus {
+     FIRST_TIMER
+     SECOND_TIMER
+     FULL_MEMBER  // Achieved after 3 Sunday attendances
+   }
+
+   enum ConversionStatus {
+     NOT_CONVERTED
+     NEW_CONVERT    // Can be any member who has given their life to Christ
+     REDEDICATED    // For existing believers who rededicated their lives
+   }
+   ```
+
+2. **Follow-up System**
+   ```typescript
+   enum FollowUpType {
+     PHONE_CALL
+     VISITATION
+     ATTENDANCE_CHECK
+   }
+
+   enum FollowUpStatus {
+     PENDING
+     COMPLETED
+     NOT_REACHABLE
+     RESCHEDULED
+     DECLINED
+   }
+   ```
+
+3. **Milestone & Department Tracking**
+   ```typescript
+   enum MilestoneType {
+     JOINED_CELL
+     JOINED_DEPARTMENT
+     DCA_BASIC
+     DCA_MATURITY
+     ENCOUNTER
+     DLI
+     SUNDAY_SERVICE_ATTENDANCE
+   }
+   ```
+
+### New Database Models Added
+
+1. **FollowUp Model**
+   - Tracks all follow-up activities
+   - Links members with follow-up team
+   - Records outcomes and next steps
+
+2. **Department Model**
+   - Manages church departments
+   - Tracks member participation
+   - Records join dates and active status
+
+3. **MemberMilestone Model**
+   - Records spiritual journey progress
+   - Tracks completion dates
+   - Includes verification system
+
+### Next Implementation Steps
+
+1. **Generate New Modules**
+   ```bash
+   nest g module modules/followup
+   nest g module modules/department
+   nest g module modules/milestone
+   ```
+
+2. **Update Database**
+   ```bash
+   npx prisma migrate dev --name enhanced_tracking_system
+   ```
+
+3. **Implement New API Endpoints**
+   - Follow-up management
+   - Department assignments
+   - Milestone recording
+   - Attendance tracking
+
+### Coming Features
+1. Automated status updates based on attendance
+2. Follow-up team dashboard
+3. Enhanced reporting system
+4. Department management interface
+
+## Updates (March 15, 2024)
+
+### Environment Setup Enhancement
+We've implemented a dual-environment setup for better development and production separation:
+
+1. **Development Environment**
+   ```env
+   # .env.development
+   DATABASE_URL="postgresql://postgres:[DEV-PASSWORD]@db.dev-project-ref.supabase.co:5432/postgres"
+   DIRECT_URL="postgresql://postgres:[DEV-PASSWORD]@db.dev-project-ref.supabase.co:5432/postgres"
+   JWT_SECRET="dev-secret-here"
+   NODE_ENV="development"
+   ```
+
+2. **Production Environment**
+   ```env
+   # .env.production
+   DATABASE_URL="postgresql://postgres:[PROD-PASSWORD]@db.prod-project-ref.supabase.co:5432/postgres"
+   DIRECT_URL="postgresql://postgres:[PROD-PASSWORD]@db.prod-project-ref.supabase.co:5432/postgres"
+   JWT_SECRET="prod-secret-here"
+   NODE_ENV="production"
+   ```
+
+### Database Management
+- **Separate Databases**: Development and Production databases on Supabase
+- **Automated Sync**: Added NPM scripts for database management:
+  ```json
+  {
+    "scripts": {
+      "db:migrate:dev": "dotenv -e .env.development prisma migrate dev",
+      "db:migrate:prod": "dotenv -e .env.production prisma migrate deploy",
+      "db:sync": "npm run db:migrate:dev && npm run db:migrate:prod",
+      "db:studio:dev": "dotenv -e .env.development prisma studio",
+      "db:studio:prod": "dotenv -e .env.production prisma studio"
+    }
+  }
+  ```
+
+### Deployment Configuration
+1. **Vercel Setup**
+   - Single project handling both environments
+   - Environment-specific URLs:
+     - Production: `https://your-project.vercel.app`
+     - Development: `https://dev-your-project-username.vercel.app`
+
+2. **Environment Variables in Vercel**
+   ```bash
+   Production:
+   - DATABASE_URL=[production-supabase-url]
+   - JWT_SECRET=[production-secret]
+
+   Development:
+   - DATABASE_URL=[development-supabase-url]
+   - JWT_SECRET=[development-secret]
+   ```
+
+### Development Workflow
+1. **Making Schema Changes**:
+   ```bash
+   # 1. Edit prisma/schema.prisma
+   # 2. Update development database
+   npm run db:migrate:dev
+
+   # 3. Test changes
+   npm run db:studio:dev
+
+   # 4. When ready, sync to production
+   npm run db:sync
+   ```
+
+2. **Vercel Deployment**:
+   - Main branch deploys to production
+   - Other branches deploy to development environment
+   - Each PR gets a preview deployment
+
+### API Access
+Frontend applications should use environment-specific API URLs:
+```typescript
+const API_URL = process.env.NEXT_PUBLIC_API_URL || (
+  process.env.NODE_ENV === 'production'
+    ? 'https://your-project.vercel.app/api'
+    : 'https://dev-your-project-username.vercel.app/api'
+);
+```
+
+### Best Practices
+1. **Database Management**:
+   - Always test changes in development first
+   - Use `db:sync` only when changes are verified
+   - Keep regular backups of production database
+
+2. **Environment Handling**:
+   - Use appropriate environment variables
+   - Never expose production secrets
+   - Keep development and production in sync
+
+3. **Deployment**:
+   - Review changes before production deployment
+   - Test thoroughly in development
+   - Monitor deployment logs
+
+### Next Steps
+1. Implement automated testing for both environments
+2. Set up monitoring and logging
+3. Implement backup automation
+4. Add deployment notifications
+
+### Dependencies Added
+- dotenv-cli: For environment-specific commands
+- Additional Prisma scripts for database management
+
+For any questions or issues, please refer to the team lead or technical documentation.
+
 
 

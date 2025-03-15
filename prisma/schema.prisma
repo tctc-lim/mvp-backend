@@ -9,8 +9,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // User roles enum
@@ -24,15 +25,17 @@ enum UserRole {
 
 // User model for authentication and authorization
 model User {
-  id        String    @id @default(uuid())
-  email     String    @unique
-  password  String
-  role      UserRole
-  name      String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  zone      Zone?     @relation("ZonalCoordinator")
-  cell      Cell?     @relation("CellLeader")
+  id              String           @id @default(uuid())
+  email           String         @unique
+  password        String
+  role            UserRole
+  name            String
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  zone            Zone?          @relation("ZonalCoordinator")
+  cell            Cell?          @relation("CellLeader")
+  assignedFollowUps FollowUp[]     @relation("AssignedFollowUps")
+  verifiedMilestones MemberMilestone[] 
 }
 
 // Zone model for church zones
@@ -65,26 +68,112 @@ model Cell {
 enum MemberStatus {
   FIRST_TIMER
   SECOND_TIMER
-  NEW_CONVERT
-  FULL_MEMBER
+  FULL_MEMBER  // After 3 Sunday attendances
+}
+
+// Add this new enum for conversion status
+enum ConversionStatus {
+  NOT_CONVERTED
+  NEW_CONVERT    // Can be any member who has given their life to Christ
+  REDEDICATED    // For existing believers who rededicated their lives
 }
 
 // Member model for church members
 model Member {
-  id            String       @id @default(uuid())
-  name          String
-  email         String?      @unique
-  phone         String
-  address       String
-  gender        String
-  status        MemberStatus @default(FIRST_TIMER)
-  zone          Zone         @relation(fields: [zoneId], references: [id])
-  zoneId        String
-  cell          Cell?        @relation(fields: [cellId], references: [id])
-  cellId        String?
-  firstVisit    DateTime     @default(now())
-  lastVisit     DateTime     @default(now())
-  prayerRequest String?
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  id              String           @id @default(uuid())
+  name            String
+  email           String?          @unique
+  phone           String
+  address         String
+  gender          String
+  status          MemberStatus     @default(FIRST_TIMER)
+  conversionStatus ConversionStatus @default(NOT_CONVERTED)
+  zone            Zone             @relation(fields: [zoneId], references: [id])
+  zoneId          String
+  cell            Cell?            @relation(fields: [cellId], references: [id])
+  cellId          String?
+  firstVisit      DateTime         @default(now())
+  lastVisit       DateTime         @default(now())
+  prayerRequest   String?
+  followUps       FollowUp[]
+  milestones      MemberMilestone[]
+  departments     MemberDepartment[]
+  sundayAttendance Int             @default(0)  // Track number of Sunday services
+  conversionDate  DateTime?        // When they became a new convert
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+}
+
+enum FollowUpType {
+  PHONE_CALL
+  VISITATION
+  ATTENDANCE_CHECK
+}
+
+enum FollowUpStatus {
+  PENDING
+  COMPLETED
+  NOT_REACHABLE
+  RESCHEDULED
+  DECLINED
+}
+
+enum MilestoneType {
+  JOINED_CELL
+  JOINED_DEPARTMENT
+  DCA_BASIC
+  DCA_MATURITY
+  ENCOUNTER
+  DLI
+  SUNDAY_SERVICE_ATTENDANCE
+}
+
+model FollowUp {
+  id              String         @id @default(uuid())
+  member          Member         @relation(fields: [memberId], references: [id])
+  memberId        String
+  type            FollowUpType
+  status          FollowUpStatus @default(PENDING)
+  notes           String?
+  assignedTo      User          @relation("AssignedFollowUps", fields: [userId], references: [id])
+  userId          String
+  nextFollowUpDate DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model Department {
+  id          String            @id @default(uuid())
+  name        String
+  members     MemberDepartment[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+model MemberDepartment {
+  id           String     @id @default(uuid())
+  member       Member     @relation(fields: [memberId], references: [id])
+  memberId     String
+  department   Department @relation(fields: [departmentId], references: [id])
+  departmentId String
+  joinDate     DateTime   @default(now())
+  isActive     Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@unique([memberId, departmentId])
+}
+
+model MemberMilestone {
+  id          String        @id @default(uuid())
+  member      Member        @relation(fields: [memberId], references: [id])
+  memberId    String
+  type        MilestoneType
+  date        DateTime      @default(now())
+  verified    Boolean       @default(false)
+  verifiedBy  User?        @relation(fields: [verifierId], references: [id])
+  verifierId  String?
+  notes       String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 }
