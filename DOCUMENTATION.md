@@ -657,7 +657,5 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || (
 - dotenv-cli: For environment-specific commands
 - Additional Prisma scripts for database management
 
-For any questions or issues, please refer to the team lead or technical documentation.
-
 
 
