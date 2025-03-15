@@ -5,7 +5,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { FollowupModule } from './modules/followup/followup.module';
 import { DepartmentModule } from './modules/department/department.module';
 import { MilestoneModule } from './modules/milestone/milestone.module';
-import configuration from './config/configuration';
+import { configuration } from './config/configuration';
 
 @Module({
   imports: [
