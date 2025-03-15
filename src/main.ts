@@ -2,9 +2,10 @@ import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
+import { NestExpressApplication } from '@nestjs/platform-express';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   // Global prefix for all routes
   app.setGlobalPrefix('api');
@@ -25,31 +26,18 @@ async function bootstrap() {
     .addTag('Members', 'Member management endpoints')
     .addTag('Followup', 'Follow-up management endpoints')
     .addTag('Health', 'Health check endpoints')
-    .addBearerAuth(
-      {
-        type: 'http',
-        scheme: 'bearer',
-        bearerFormat: 'JWT',
-        in: 'header'
-      },
-      'access-token'
-    )
+    .addBearerAuth()
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
 
-  // Custom Swagger UI options
-  const customOptions = {
-    customSiteTitle: 'Church KYC API Docs',
+  SwaggerModule.setup('api-docs', app, document, {
+    customJs: '/swagger-ui-bundle.js',
+    customCssUrl: '/swagger-ui.css',
     swaggerOptions: {
       persistAuthorization: true,
-      docExpansion: 'none',
-      filter: true,
-      tagsSorter: 'alpha',
     },
-  };
-
-  SwaggerModule.setup('api-docs', app, document, customOptions);
+  });
 
   // Enable CORS
   app.enableCors();
