@@ -45,19 +45,43 @@ async function bootstrap() {
   // Serve static files from public directory
   app.useStaticAssets('public');
 
-  // Update Swagger setup to use local files
+  // Update Swagger setup with reliable CDN links
   SwaggerModule.setup('api-docs', app, document, {
     customSiteTitle: 'Church KYC API Documentation',
-    customfavIcon: '/swagger-ui/favicon-32x32.png',
-    customCssUrl: '/swagger-ui/swagger-ui.css',
+    customfavIcon: 'https://raw.githubusercontent.com/swagger-api/swagger-ui/master/dist/favicon-32x32.png',
+    customCssUrl: 'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.18.2/swagger-ui.min.css',
     customJs: [
-      '/swagger-ui/swagger-ui-bundle.js',
-      '/swagger-ui/swagger-ui-standalone-preset.js'
+      'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.18.2/swagger-ui-bundle.min.js',
+      'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.18.2/swagger-ui-standalone-preset.min.js'
     ],
+    customJsStr: `
+      window.onload = function() {
+        window.ui = SwaggerUIBundle({
+          url: '/api-docs-json',
+          dom_id: '#swagger-ui',
+          deepLinking: true,
+          presets: [
+            SwaggerUIBundle.presets.apis,
+            SwaggerUIBundle.SwaggerUIStandalonePreset
+          ],
+          plugins: [
+            SwaggerUIBundle.plugins.DownloadUrl
+          ],
+          layout: "BaseLayout",
+          persistAuthorization: true,
+          docExpansion: 'list',
+          defaultModelsExpandDepth: 1,
+          defaultModelExpandDepth: 1,
+          defaultModelRendering: 'model'
+        });
+      }
+    `,
     swaggerOptions: {
       persistAuthorization: true,
       docExpansion: 'list',
       filter: true,
+      displayRequestDuration: true,
+      tryItOutEnabled: true
     },
   });
 
