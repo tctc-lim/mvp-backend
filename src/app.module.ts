@@ -1,7 +1,12 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
-import configuration from './config/configuration';
+import { AuthModule } from './modules/auth/auth.module';
+import { FollowupModule } from './modules/followup/followup.module';
+import { DepartmentModule } from './modules/department/department.module';
+import { MilestoneModule } from './modules/milestone/milestone.module';
+import { configuration } from './config/configuration';
+import { HealthModule } from './modules/health/health.module';
 
 @Module({
   imports: [
@@ -10,6 +15,11 @@ import configuration from './config/configuration';
       load: [configuration],
     }),
     PrismaModule,
+    AuthModule,
+    FollowupModule,
+    DepartmentModule,
+    MilestoneModule,
+    HealthModule,
   ],
   controllers: [],
   providers: [],
