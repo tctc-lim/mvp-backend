@@ -7,6 +7,7 @@ import { DepartmentModule } from './modules/department/department.module';
 import { MilestoneModule } from './modules/milestone/milestone.module';
 import { configuration } from './config/configuration';
 import { HealthModule } from './modules/health/health.module';
+import { MemberModule } from './modules/member/member.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { HealthModule } from './modules/health/health.module';
     DepartmentModule,
     MilestoneModule,
     HealthModule,
+    MemberModule,
   ],
   controllers: [],
   providers: [],
