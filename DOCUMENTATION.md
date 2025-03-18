@@ -660,4 +660,73 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || (
 For any questions or issues, please refer to the team lead or technical documentation.
 
 
+###updates (March 16, 2025)
+
+# Church KYC System - Member API Documentation
+
+## Overview
+This document outlines the available REST API endpoints for managing church members.
+
+## Base URL: http://localhost:3000/members
+
+1. Create a Member
+POST (http://localhost:3000/members)
+Headers {
+  "Content-Type": "application/json"
+}
+Body
+{
+  "name": "John Doe",
+  "email": "johndoe@example.com",
+  "phone": "1234567890",
+  "address": "123 Church Street",
+  "gender": "Male",
+  "status": "FIRST_TIMER",
+  "conversionStatus": "NOT_CONVERTED",
+  "zoneId": "zone-123",
+  "cellId": "cell-456",
+  "sundayAttendance": 2
+}
+
+2. Get All Members
+GET (http://localhost:3000/members)
+Headers {
+  "Content-Type": "application/json"
+}
+
+3. Get A Single Member
+GET (http://localhost:3000/members/{id})
+Headers {
+  "Content-Type": "application/json"
+}
+
+4. Update A Member 
+PATCH (http://localhost:3000/members/{id})
+Headers {
+  "Content-Type": "application/json"
+}
+Body {
+  "name": "John Updated",
+  "phone": "9999999999",
+  "status": "FULL_MEMBER"
+}
+
+5. Delete A Member 
+DELETE (http://localhost:3000/members/{id})
+Headers {
+  "Content-Type": "application/json"
+}
+
+
+Error Responses
+For all endpoints, errors follow this format:
+{
+  "statusCode": 400,
+  "message": "Validation error message",
+  "error": "Bad Request"
+}
+Possible Errors
+400 Bad Request: Invalid request body
+404 Not Found: Member ID does not exist
+500 Internal Server Error: Unexpected server error
 
