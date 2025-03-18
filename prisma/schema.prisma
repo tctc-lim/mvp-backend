@@ -35,7 +35,8 @@ model User {
   zone            Zone?          @relation("ZonalCoordinator")
   cell            Cell?          @relation("CellLeader")
   assignedFollowUps FollowUp[]     @relation("AssignedFollowUps")
-  verifiedMilestones MemberMilestone[] 
+  verifiedMilestones MemberMilestone[]
+  mustChangePassword Boolean  @default(false)
 }
 
 // Zone model for church zones
