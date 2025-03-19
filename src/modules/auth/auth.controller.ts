@@ -2,7 +2,7 @@ import {
   Body, Controller, Delete, Get, Param, Patch, Post, Put, Req, Request, UnauthorizedException, UseGuards 
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { RegisterDto, LoginDto, UpdateUserDto, ChangePasswordDto } from './dto/auth.dto';
+import { RegisterDto, LoginDto, UpdateUserDto, ChangePasswordDto, ResetPasswordDto } from './dto/auth.dto';
 import { ApiTags } from '@nestjs/swagger';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { RolesGuard } from 'src/common/guards/roles.guard';
@@ -18,7 +18,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.SUPER_ADMIN)
   async register(@Body() dto: RegisterDto, @Request() req) {
-    const newUser = await this.authService.register(dto, req.user.id);
+    const newUser = await this.authService.register(dto);
     return {
       message: 'User registered successfully.',
       user: newUser,
@@ -30,9 +30,9 @@ export class AuthController {
     return this.authService.login(dto);
   }
 
-  @Post('change-password')
-  async changePassword(@Body() ChangePasswordDto: ChangePasswordDto) {
-    return this.authService.changePassword(ChangePasswordDto);
+  @Post('reset-password')
+  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+    return this.authService.resetPassword(resetPasswordDto.token, resetPasswordDto.newPassword);
   }
 
   @Get('users')
