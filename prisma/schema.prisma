@@ -25,8 +25,9 @@ enum UserRole {
 
 // User model for authentication and authorization
 model User {
-  id              String           @id @default(uuid())
+  id              String         @id @default(uuid())
   email           String         @unique
+  phone           String         @default("N/A") // ✅ Provide a default value
   password        String
   role            UserRole
   name            String
@@ -34,9 +35,10 @@ model User {
   updatedAt       DateTime       @updatedAt
   zone            Zone?          @relation("ZonalCoordinator")
   cell            Cell?          @relation("CellLeader")
-  assignedFollowUps FollowUp[]     @relation("AssignedFollowUps")
+  assignedFollowUps FollowUp[]   @relation("AssignedFollowUps")
   verifiedMilestones MemberMilestone[]
   mustChangePassword Boolean  @default(false)
+  resetToken String? // Add resetToken field
 }
 
 // Zone model for church zones
