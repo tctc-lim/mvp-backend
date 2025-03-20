@@ -8,6 +8,7 @@ import { MilestoneModule } from './modules/milestone/milestone.module';
 import { configuration } from './config/configuration';
 import { HealthModule } from './modules/health/health.module';
 import { MemberModule } from './modules/member/member.module';
+import { ZonesModule } from './zones/zones.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { MemberModule } from './modules/member/member.module';
     MilestoneModule,
     HealthModule,
     MemberModule,
+    ZonesModule,
   ],
   controllers: [],
   providers: [],
