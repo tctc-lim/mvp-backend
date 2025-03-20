@@ -6,7 +6,6 @@ import { UserRole } from '@prisma/client'; // ✅ Use Prisma UserRole
 
 @Injectable()
 export class ZonesService {
-    findAll: any;
     findOne: any;
     constructor(private readonly prisma: PrismaService) { }
 
@@ -19,6 +18,11 @@ export class ZonesService {
 
         return this.prisma.zone.create({ data: createZoneDto });
     }
+
+    async findAll() {
+        return this.prisma.zone.findMany(); // ✅ Ensure this function exists
+      }
+    
 
     async update(id: string, updateZoneDto: UpdateZoneDto, userRole: UserRole) {
         const allowedRoles: UserRole[] = [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.ZONAL_COORDINATOR];
