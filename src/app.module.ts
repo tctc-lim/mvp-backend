@@ -6,6 +6,7 @@ import { MilestoneModule } from './modules/milestone/milestone.module';
 import { configuration } from './config/configuration';
 import { HealthModule } from './modules/health/health.module';
 import { MemberModule } from './modules/member/member.module';
+import { ZonesModule } from './zones/zones.module';
 import { MailModule } from './mail/mail.module';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -27,6 +28,7 @@ import { AuthService } from './modules/auth/auth.service';
     MilestoneModule,
     HealthModule,
     MemberModule,
+    ZonesModule,
     MailModule,
     MailerModule.forRootAsync({
       imports: [ConfigModule],
@@ -45,6 +47,7 @@ import { AuthService } from './modules/auth/auth.service';
         },
       }),
     }),
+
   ],
   providers: [AuthService, MailService, PrismaService],
   exports: [AuthService, MailService],
