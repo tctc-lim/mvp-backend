@@ -2,13 +2,13 @@ import { Controller, Post, Get, Patch, Delete, Body, Param, Req, UseGuards } fro
 import { FollowUpService } from './followups.service';
 import { CreateFollowUpDto } from './dto/create-followup.dto';
 import { UpdateFollowUpDto } from './dto/update-followup.dto';
-import { Request } from 'express';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { UserRole } from '@prisma/client';
+import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 
 @Controller('followups')
-@UseGuards(RolesGuard)
+@UseGuards(RolesGuard, JwtAuthGuard)
 export class FollowUpController {
   constructor(private followUpService: FollowUpService) {}
 
