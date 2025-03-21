@@ -1,3 +1,5 @@
 {"context":"NestApplication","level":"error","message":"Error: listen EADDRINUSE: address already in use :::17455","stack":[null],"timestamp":"2025-03-21T11:10:46.379Z"}
 {"context":"NestApplication","level":"error","message":"Error: listen EADDRINUSE: address already in use :::17455","stack":[null],"timestamp":"2025-03-21T11:11:24.808Z"}
 {"context":"NestApplication","level":"error","message":"Error: listen EADDRINUSE: address already in use :::3000","stack":[null],"timestamp":"2025-03-21T11:13:22.274Z"}
+{"level":"error","message":"Failed to start application","stack":[{"clientVersion":"6.5.0","errorCode":"P1001","name":"PrismaClientInitializationError"}],"timestamp":"2025-03-21T20:29:46.078Z"}
+{"level":"error","message":"Failed to start application","stack":[{"clientVersion":"6.5.0","errorCode":"P1001","name":"PrismaClientInitializationError"}],"timestamp":"2025-03-21T20:39:45.664Z"}
