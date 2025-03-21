@@ -1,42 +1,57 @@
-import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { Injectable, ForbiddenException } from '@nestjs/common';
 import { CreateZoneDto } from './dto/create-zone-dto';
 import { UpdateZoneDto } from './dto/update-zone.dto';
-import { UserRole } from '@prisma/client'; // ✅ Use Prisma UserRole
+import { PrismaService } from '../../prisma/prisma.service';
+import { UserRole } from '@prisma/client';
 
 @Injectable()
 export class ZonesService {
-    findAll: any;
-    findOne: any;
-    constructor(private readonly prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
-    async create(createZoneDto: CreateZoneDto, userRole: UserRole) {
-        const allowedRoles: UserRole[] = [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.ZONAL_COORDINATOR];
-
-        if (!allowedRoles.includes(userRole as UserRole)) {
-            throw new ForbiddenException('You do not have permission to create a zone.');
-        }
-
-        return this.prisma.zone.create({ data: createZoneDto });
+  async create(createZoneDto: CreateZoneDto, userRole: UserRole) {
+    if (userRole !== UserRole.SUPER_ADMIN) {
+      throw new ForbiddenException('Only super admins can create zones');
     }
+    return this.prisma.zone.create({
+      data: createZoneDto,
+    });
+  }
 
-    async update(id: string, updateZoneDto: UpdateZoneDto, userRole: UserRole) {
-        const allowedRoles: UserRole[] = [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.ZONAL_COORDINATOR];
+  findAll() {
+    return this.prisma.zone.findMany({
+      include: {
+        coordinator: true,
+        cells: true,
+      },
+    });
+  }
 
-        if (!allowedRoles.includes(userRole as UserRole)) {
-            throw new ForbiddenException('You do not have permission to update a zone.');
-        }
+  findOne(id: string) {
+    return this.prisma.zone.findUnique({
+      where: { id },
+      include: {
+        coordinator: true,
+        cells: true,
+      },
+    });
+  }
 
-        return this.prisma.zone.update({ where: { id }, data: updateZoneDto });
+  async update(id: string, updateZoneDto: UpdateZoneDto, userRole: UserRole) {
+    if (userRole !== UserRole.SUPER_ADMIN) {
+      throw new ForbiddenException('Only super admins can update zones');
     }
+    return this.prisma.zone.update({
+      where: { id },
+      data: updateZoneDto,
+    });
+  }
 
-    async remove(id: string, userRole: UserRole) {
-        const allowedRoles: UserRole[] = [UserRole.SUPER_ADMIN, UserRole.ADMIN];
-
-        if (!allowedRoles.includes(userRole as UserRole)) {
-            throw new ForbiddenException('You do not have permission to delete a zone.');
-        }
-
-        return this.prisma.zone.delete({ where: { id } });
+  async remove(id: string, userRole: UserRole) {
+    if (userRole !== UserRole.SUPER_ADMIN) {
+      throw new ForbiddenException('Only super admins can delete zones');
     }
+    return this.prisma.zone.delete({
+      where: { id },
+    });
+  }
 }

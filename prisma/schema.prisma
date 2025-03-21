@@ -9,9 +9,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // User roles enum
@@ -39,6 +38,12 @@ model User {
   verifiedMilestones MemberMilestone[]
   mustChangePassword Boolean  @default(false)
   resetToken String? // Add resetToken field
+  resetTokenExpires DateTime?
+  refreshTokens    RefreshToken[]
+
+  @@index([email])
+  @@index([role])
+  @@index([phone])
 }
 
 // Zone model for church zones
@@ -105,6 +110,13 @@ model Member {
   conversionDate  DateTime?        // When they became a new convert
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
+
+  @@index([phone])
+  @@index([status])
+  @@index([zoneId])
+  @@index([cellId])
+  @@index([conversionStatus])
+  @@index([lastVisit])
 }
 
 enum FollowUpType {
@@ -143,6 +155,11 @@ model FollowUp {
   nextFollowUpDate DateTime?
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
+
+  @@index([status])
+  @@index([memberId])
+  @@index([userId])
+  @@index([nextFollowUpDate])
 }
 
 model Department {
@@ -179,4 +196,24 @@ model MemberMilestone {
   notes       String?
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
+
+  @@index([memberId])
+  @@index([type])
+  @@index([verified])
+  @@index([date])
+}
+
+model RefreshToken {
+  id          String   @id @default(uuid())
+  token       String   @unique
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  isRevoked   Boolean  @default(false)
+
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
 }

@@ -1,42 +1,51 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Put, Param, Delete, UseGuards, Req } from '@nestjs/common';
 import { ZonesService } from './zones.service';
 import { CreateZoneDto } from './dto/create-zone-dto';
 import { UpdateZoneDto } from './dto/update-zone.dto';
-import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
-import { UserRole } from '@prisma/client'; // ✅ Use Prisma UserRole
-import { RolesGuard } from 'src/common/guards/roles.guard';
-import { Roles } from 'src/common/decorators/roles.decorator';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { UserRole } from '@prisma/client';
+import { Request } from 'express';
+
+interface RequestWithUser extends Request {
+  user: { sub: string; email: string; role: UserRole };
+}
 
 @Controller('zones')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ZonesController {
   constructor(private readonly zonesService: ZonesService) {}
 
-  @Post('/register')
-  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.ZONAL_COORDINATOR)
-  create(@Body() createZoneDto: CreateZoneDto, @Req() req) {
+  @Post()
+  @Roles(UserRole.SUPER_ADMIN)
+  create(@Body() createZoneDto: CreateZoneDto, @Req() req: RequestWithUser) {
     return this.zonesService.create(createZoneDto, req.user.role);
   }
 
-  @Get('/all')
+  @Get()
   findAll() {
     return this.zonesService.findAll();
   }
 
-  @Get('/all/:id')
+  @Get(':id')
   findOne(@Param('id') id: string) {
     return this.zonesService.findOne(id);
   }
 
-  @Patch('/edit/:id')
-  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.ZONAL_COORDINATOR)
-  update(@Param('id') id: string, @Body() updateZoneDto: UpdateZoneDto, @Req() req) {
+  @Put(':id')
+  @Roles(UserRole.SUPER_ADMIN)
+  update(
+    @Param('id') id: string,
+    @Body() updateZoneDto: UpdateZoneDto,
+    @Req() req: RequestWithUser,
+  ) {
     return this.zonesService.update(id, updateZoneDto, req.user.role);
   }
 
-  @Delete('/delete/:id')
-  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
-  remove(@Param('id') id: string, @Req() req) {
+  @Delete(':id')
+  @Roles(UserRole.SUPER_ADMIN)
+  remove(@Param('id') id: string, @Req() req: RequestWithUser) {
     return this.zonesService.remove(id, req.user.role);
   }
 }
