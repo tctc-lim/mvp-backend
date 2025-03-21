@@ -1,6 +1,6 @@
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
-import { FollowupModule } from './modules/followup/followup.module';
+import { FollowUpModule } from './modules/followups/followups.module';
 import { DepartmentModule } from './modules/department/department.module';
 import { MilestoneModule } from './modules/milestone/milestone.module';
 import { configuration } from './config/configuration';
@@ -23,7 +23,7 @@ import { AuthService } from './modules/auth/auth.service';
     }), // ✅ Load environment variables
     PrismaModule,
     AuthModule,
-    FollowupModule,
+    FollowUpModule,
     DepartmentModule,
     MilestoneModule,
     HealthModule,
