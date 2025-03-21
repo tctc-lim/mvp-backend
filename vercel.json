@@ -1,0 +1,46 @@
+{
+    "version": 2,
+    "git": {
+        "deploymentEnabled": {
+            "main": true,
+            "dev": true,
+            "feature/*": false
+        }
+    },
+    "builds": [
+        {
+            "src": "src/main.ts",
+            "use": "@vercel/node"
+        },
+        {
+            "src": "node_modules/swagger-ui-dist/*",
+            "use": "@vercel/static"
+        }
+    ],
+    "routes": [
+        {
+            "src": "/swagger-ui/(.*)",
+            "dest": "/node_modules/swagger-ui-dist/$1"
+        },
+        {
+            "src": "/api-docs/(.*)",
+            "dest": "src/main.ts"
+        },
+        {
+            "src": "/api/(.*)",
+            "dest": "src/main.ts",
+            "methods": [
+                "GET",
+                "POST",
+                "PUT",
+                "DELETE",
+                "PATCH",
+                "OPTIONS"
+            ]
+        },
+        {
+            "src": "/(.*)",
+            "dest": "src/main.ts"
+        }
+    ]
+}
