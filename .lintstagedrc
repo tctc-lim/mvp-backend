@@ -1,0 +1,6 @@
+{
+  "*.ts": [
+    "prettier --write",
+    "eslint --fix --rule '@typescript-eslint/no-unsafe-assignment: warn' --rule '@typescript-eslint/no-base-to-string: warn' --rule '@typescript-eslint/restrict-template-expressions: warn' --rule '@typescript-eslint/no-unsafe-enum-comparison: warn'"
+  ]
+} 

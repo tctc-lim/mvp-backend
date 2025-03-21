@@ -1,23 +1,37 @@
-import { IsString, IsOptional, IsEnum, IsInt, IsEmail } from 'class-validator';
+import { IsString, IsNotEmpty, IsEmail, IsOptional, IsInt, IsEnum } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 import { MemberStatus, ConversionStatus } from '@prisma/client';
 
 export class CreateMemberDto {
+  @ApiProperty({ example: 'John Doe' })
   @IsString()
-  name: string;
+  @IsNotEmpty()
+  name!: string;
 
-  @IsOptional()
+  @ApiProperty({ example: 'john@example.com', required: false })
   @IsEmail()
+  @IsOptional()
   email?: string;
 
+  @ApiProperty({ example: '+1234567890' })
   @IsString()
-  phone: string;
+  @IsNotEmpty()
+  phone!: string;
 
-  @IsOptional()
+  @ApiProperty({ example: '123 Main St' })
   @IsString()
-  address: string;
+  @IsNotEmpty()
+  address!: string;
 
+  @ApiProperty({ example: 'male', enum: ['male', 'female'] })
   @IsString()
-  gender: string;
+  @IsNotEmpty()
+  gender!: string;
+
+  @ApiProperty({ example: 'uuid-of-zone' })
+  @IsString()
+  @IsNotEmpty()
+  zoneId!: string;
 
   @IsEnum(MemberStatus)
   @IsOptional()
@@ -26,9 +40,6 @@ export class CreateMemberDto {
   @IsEnum(ConversionStatus)
   @IsOptional()
   conversionStatus?: ConversionStatus;
-
-  @IsString()
-  zoneId: string; // Required field
 
   @IsOptional()
   @IsString()

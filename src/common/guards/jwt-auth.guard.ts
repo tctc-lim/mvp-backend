@@ -1,17 +1,12 @@
-import { Injectable, ExecutionContext, UnauthorizedException, ForbiddenException } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
-  handleRequest(err, user, _info) {
+  handleRequest<T>(err: Error | null, user: T): T {
     if (err || !user) {
-      throw new UnauthorizedException('Unauthorized access');
+      throw err || new UnauthorizedException('Authentication required');
     }
-
-    if (user.mustChangePassword) {
-      throw new ForbiddenException('Password change required on first login');
-    }
-
     return user;
   }
 }

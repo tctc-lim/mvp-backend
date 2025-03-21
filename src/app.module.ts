@@ -1,56 +1,67 @@
-import { PrismaModule } from './prisma/prisma.module';
+import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { WinstonModule } from 'nest-winston';
+import { MailerModule } from '@nestjs-modules/mailer';
+import { APP_GUARD } from '@nestjs/core';
 import { AuthModule } from './modules/auth/auth.module';
+import { HealthModule } from './modules/health/health.module';
+import { PrismaModule } from './prisma/prisma.module';
 import { FollowupModule } from './modules/followup/followup.module';
 import { DepartmentModule } from './modules/department/department.module';
 import { MilestoneModule } from './modules/milestone/milestone.module';
-import { configuration } from './config/configuration';
-import { HealthModule } from './modules/health/health.module';
 import { MemberModule } from './modules/member/member.module';
 import { ZonesModule } from './modules/zones/zones.module';
 import { MailModule } from './mail/mail.module';
-import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { MailerModule } from '@nestjs-modules/mailer';
-import { MailService } from './mail/mail.service';
-import { PrismaService } from './prisma/prisma.service';
-import { AuthService } from './modules/auth/auth.service';
+import { configuration } from './config/configuration';
+import { loggerConfig } from './config/logger.config';
+import { throttlerConfig } from './config/throttler.config';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development',
       load: [configuration],
-    }), // ✅ Load environment variables
+    }),
+    ThrottlerModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: () => throttlerConfig,
+      inject: [ConfigService],
+    }),
+    MailerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        transport: {
+          host: configService.get('MAILTRAP_HOST'),
+          port: configService.get('MAILTRAP_PORT'),
+          auth: {
+            user: configService.get('MAILTRAP_USER'),
+            pass: configService.get('MAILTRAP_PASS'),
+          },
+        },
+        defaults: {
+          from: `"${configService.get('MAILTRAP_FROM_NAME')}" <${configService.get('MAILTRAP_FROM_EMAIL')}>`,
+        },
+      }),
+    }),
+    WinstonModule.forRoot(loggerConfig),
     PrismaModule,
     AuthModule,
-    FollowupModule,
-    DepartmentModule,
-    MilestoneModule,
     HealthModule,
     MemberModule,
     ZonesModule,
     MailModule,
-    MailerModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: async (configService: ConfigService) => ({
-        transport: {
-          host: configService.get<string>('MAILTRAP_HOST'),
-          port: configService.get<number>('MAILTRAP_PORT'),
-          auth: {
-            user: configService.get<string>('MAILTRAP_USER'),
-            pass: configService.get<string>('MAILTRAP_PASS'),
-          },
-        },
-        defaults: {
-          from: `"${configService.get<string>('MAILTRAP_FROM_NAME')}" <${configService.get<string>('MAILTRAP_FROM_EMAIL')}>`,
-        },
-      }),
-    }),
-
+    FollowupModule,
+    DepartmentModule,
+    MilestoneModule,
   ],
-  providers: [AuthService, MailService, PrismaService],
-  exports: [AuthService, MailService],
-  controllers: [],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}
