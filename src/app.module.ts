@@ -14,6 +14,7 @@ import { MailerModule } from '@nestjs-modules/mailer';
 import { MailService } from './mail/mail.service';
 import { PrismaService } from './prisma/prisma.service';
 import { AuthService } from './modules/auth/auth.service';
+import { CellsModule } from './modules/cells/cells.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { AuthService } from './modules/auth/auth.service';
         },
       }),
     }),
+    CellsModule,
 
   ],
   providers: [AuthService, MailService, PrismaService],
