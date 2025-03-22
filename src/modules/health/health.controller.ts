@@ -18,8 +18,9 @@ export class HealthController {
       // Test database connection
       await this.prisma.$queryRaw`SELECT current_database(), current_schema(), version()`;
 
-      const baseUrl =
-        this.configService.get('API_URL') || `http://localhost:${process.env.PORT || 3000}`;
+      // Use the current request URL as base URL
+      const port = process.env.PORT || 3000;
+      const baseUrl = `http://localhost:${port}`;
 
       return {
         status: 'ok',
@@ -33,10 +34,11 @@ export class HealthController {
         database: {
           status: 'connected',
           name: process.env.DATABASE_URL?.split('/').pop()?.split('?')[0],
+          url: process.env.DATABASE_URL?.replace(/:[^:@]+@/, ':****@'), // Mask password
         },
         cors: {
-          origin: this.configService.get('CORS_ORIGIN') || '*',
-        },
+          origin: this.configService.get('cors.origin') || '*',
+        }
       };
     } catch (error: unknown) {
       return {
@@ -48,8 +50,9 @@ export class HealthController {
         },
         database: {
           status: 'disconnected',
+          url: process.env.DATABASE_URL?.replace(/:[^:@]+@/, ':****@'), // Mask password
           error: error instanceof Error ? error.message : 'Unknown error',
-        },
+        }
       };
     }
   }
