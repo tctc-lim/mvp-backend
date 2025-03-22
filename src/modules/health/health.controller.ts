@@ -11,20 +11,29 @@ export class HealthController {
   async check() {
     try {
       // Test database connection
-      await this.prisma.$queryRaw`SELECT 1`;
+      await this.prisma.$queryRaw`SELECT current_database(), current_schema(), version()`;
 
       return {
         status: 'ok',
         timestamp: new Date().toISOString(),
-        database: 'connected',
+        database: {
+          status: 'connected',
+          url: process.env.DATABASE_URL?.replace(/:[^:@]+@/, ':****@'), // Mask password
+        },
         environment: process.env.NODE_ENV,
+        port: process.env.PORT,
       };
     } catch (error: unknown) {
       return {
         status: 'error',
         timestamp: new Date().toISOString(),
-        database: 'disconnected',
-        error: error instanceof Error ? error.message : 'Unknown error',
+        database: {
+          status: 'disconnected',
+          url: process.env.DATABASE_URL?.replace(/:[^:@]+@/, ':****@'), // Mask password
+          error: error instanceof Error ? error.message : 'Unknown error',
+        },
+        environment: process.env.NODE_ENV,
+        port: process.env.PORT,
       };
     }
   }
