@@ -9,7 +9,7 @@ export class HealthController {
   constructor(
     private prisma: PrismaService,
     private configService: ConfigService,
-  ) { }
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'Check API health status' })
@@ -21,10 +21,6 @@ export class HealthController {
       // Use the current request URL as base URL
       const port = process.env.PORT || 3000;
       const baseUrl = `http://localhost:${port}`;
-      // Use the current request URL as base URL
-      const port = process.env.PORT || 3000;
-      const baseUrl = `http://localhost:${port}`;
-
       return {
         status: 'ok',
         timestamp: new Date().toISOString(),
@@ -57,7 +53,7 @@ export class HealthController {
           url: process.env.DATABASE_URL?.replace(/:[^:@]+@/, ':****@'), // Mask password
           url: process.env.DATABASE_URL?.replace(/:[^:@]+@/, ':****@'), // Mask password
           error: error instanceof Error ? error.message : 'Unknown error',
-        }
+        },
       };
     }
   }
