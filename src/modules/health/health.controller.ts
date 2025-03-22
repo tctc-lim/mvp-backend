@@ -1,11 +1,15 @@
 import { Controller, Get } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { ConfigService } from '@nestjs/config';
 
 @ApiTags('Health')
 @Controller('health')
 export class HealthController {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private configService: ConfigService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'Check API health status' })
@@ -14,27 +18,24 @@ export class HealthController {
       // Test database connection
       await this.prisma.$queryRaw`SELECT current_database(), current_schema(), version()`;
 
+      const baseUrl =
+        this.configService.get('API_URL') || `http://localhost:${process.env.PORT || 3000}`;
+
       return {
         status: 'ok',
         timestamp: new Date().toISOString(),
         api: {
           version: '1.0',
           environment: process.env.NODE_ENV,
-          baseUrl:
-            process.env.NODE_ENV === 'production'
-              ? 'https://api.churchkyc.com/api/v1'
-              : `http://localhost:${process.env.PORT || 3000}/api/v1`,
-          docsUrl:
-            process.env.NODE_ENV === 'production'
-              ? 'https://api.churchkyc.com/api-docs'
-              : `http://localhost:${process.env.PORT || 3000}/api-docs`,
+          baseUrl: `${baseUrl}/api/v1`,
+          docsUrl: `${baseUrl}/api-docs`,
         },
         database: {
           status: 'connected',
           name: process.env.DATABASE_URL?.split('/').pop()?.split('?')[0],
         },
         cors: {
-          origin: process.env.CORS_ORIGIN || '*',
+          origin: this.configService.get('CORS_ORIGIN') || '*',
         },
       };
     } catch (error: unknown) {

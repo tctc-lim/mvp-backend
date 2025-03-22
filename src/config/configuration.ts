@@ -15,9 +15,16 @@ export const configuration = () => ({
     docsPath: 'api-docs',
   },
   cors: {
-    origin: process.env.CORS_ORIGIN || '*',
+    // Allow Vercel frontend URL and local development
+    origin:
+      process.env.NODE_ENV === 'production' ? ['https://mvp-frontend-livid-seven.vercel.app'] : '*',
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
+  },
+  security: {
+    rateLimitMax: process.env.NODE_ENV === 'production' ? 100 : 1000,
+    rateLimitTimeWindow: 15 * 60 * 1000, // 15 minutes
+    bcryptSaltRounds: 12,
   },
   mailer: {
     host: process.env.MAILTRAP_HOST,
@@ -27,8 +34,8 @@ export const configuration = () => ({
       pass: process.env.MAILTRAP_PASS,
     },
     from: {
-      name: process.env.MAILTRAP_FROM_NAME || 'Church KYC',
-      email: process.env.MAILTRAP_FROM_EMAIL || 'no-reply@churchkyc.com',
+      name: process.env.MAILTRAP_FROM_NAME || 'KYM System',
+      email: process.env.MAILTRAP_FROM_EMAIL || 'no-reply@thecasualtech.com',
     },
   },
 });
