@@ -34,7 +34,6 @@ export class HealthController {
           status: 'connected',
           name: process.env.DATABASE_URL?.split('/').pop()?.split('?')[0],
           url: process.env.DATABASE_URL?.replace(/:[^:@]+@/, ':****@'), // Mask password
-          url: process.env.DATABASE_URL?.replace(/:[^:@]+@/, ':****@'), // Mask password
         },
         cors: {
           origin: this.configService.get('cors.origin') || '*',
@@ -50,7 +49,6 @@ export class HealthController {
         },
         database: {
           status: 'disconnected',
-          url: process.env.DATABASE_URL?.replace(/:[^:@]+@/, ':****@'), // Mask password
           url: process.env.DATABASE_URL?.replace(/:[^:@]+@/, ':****@'), // Mask password
           error: error instanceof Error ? error.message : 'Unknown error',
         },
