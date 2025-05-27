@@ -83,14 +83,29 @@ export class RefreshTokenService {
   async rotateRefreshToken(oldToken: string): Promise<{ token: string; accessToken: string }> {
     const { userId } = await this.validateRefreshToken(oldToken);
 
+    // Get user data
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
     // Revoke the old token
     await this.revokeRefreshToken(oldToken);
 
     // Create new refresh token
     const newRefreshToken = await this.createRefreshToken(userId);
 
-    // Create new access token
-    const payload = { sub: userId };
+    // Create new access token with full user data
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      mustChangePassword: user.mustChangePassword,
+    };
+
     const accessToken = await this.jwtService.signAsync(payload, {
       secret: this.config.get('JWT_SECRET'),
       expiresIn: this.config.get('JWT_EXPIRATION') || '15m',
