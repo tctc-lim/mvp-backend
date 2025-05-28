@@ -34,10 +34,11 @@ export class RegisterDto {
   @IsNotEmpty()
   email!: string;
 
-  @ApiProperty()
+  @ApiProperty({ required: false })
+  @IsOptional()
   @IsString()
   @MinLength(8)
-  password!: string;
+  password?: string;
 
   @ApiProperty()
   @IsString()
@@ -110,4 +111,11 @@ export class ChangePasswordDto {
     message: 'Password must contain at least one letter and one number',
   })
   newPassword!: string;
+}
+
+export class ForgotPasswordDto {
+  @ApiProperty()
+  @IsEmail()
+  @IsNotEmpty()
+  email!: string;
 }

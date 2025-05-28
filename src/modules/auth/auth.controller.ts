@@ -20,6 +20,7 @@ import {
   UpdateUserDto,
   ResetPasswordDto,
   ChangePasswordDto,
+  ForgotPasswordDto,
 } from './dto/auth.dto';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Roles } from 'src/common/decorators/roles.decorator';
@@ -133,5 +134,13 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Current password is incorrect' })
   async changePassword(@Request() req: RequestWithUser, @Body() dto: ChangePasswordDto) {
     return this.authService.changePassword(req.user.sub, dto);
+  }
+
+  @Version('1')
+  @Post('forgot-password')
+  @ApiOperation({ summary: 'Request password reset' })
+  @ApiResponse({ status: 200, description: 'Password reset email sent' })
+  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(forgotPasswordDto.email);
   }
 }
