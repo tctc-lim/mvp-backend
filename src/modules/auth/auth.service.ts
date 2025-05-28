@@ -18,7 +18,7 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
-    private readonly mailService: MailService, // ✅ Use Mailtrap API service
+    private readonly mailService: MailService,
     private readonly refreshTokenService: RefreshTokenService,
   ) {}
 
@@ -34,11 +34,12 @@ export class AuthService {
   }
 
   async register(userData: RegisterDto) {
-    const hashedPassword = await bcrypt.hash(userData.password, 10);
+    // Generate a random password if not provided
+    const password = userData.password || randomBytes(8).toString('hex');
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     // Generate reset token
     const resetToken = randomBytes(32).toString('hex');
-    const resetPasswordLink = `https://localhost:3001/reset-password?token=${resetToken}`;
 
     const user = await this.prisma.user.create({
       data: {
@@ -49,16 +50,18 @@ export class AuthService {
       },
     });
 
-    // ✅ Send email via Mailtrap SMTP
-    await this.mailService.sendMail(
-      user.email,
-      'Welcome to Our Platform - Set Your Password',
-      `<h1>Welcome, ${user.name}!</h1>
-            <p>Click the link below to set your password:</p>
-            <a href="${resetPasswordLink}">Set Your Password</a>`,
-    );
+    // Send welcome email with password setup link
+    await this.mailService.sendWelcomeEmail(user.email, user.name, resetToken);
 
-    return { message: 'User registered. Check your email to set your password.' };
+    return {
+      message: 'User registered successfully. Please check your email to set your password.',
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+      },
+    };
   }
 
   // ✅ Reset Password (Uses token & invalidates it after reset)
@@ -171,5 +174,38 @@ export class AuthService {
     });
 
     return { message: 'Password changed successfully' };
+  }
+
+  async forgotPassword(email: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      // Return success even if user doesn't exist to prevent email enumeration
+      return {
+        message: 'If an account exists with this email, you will receive a password reset link.',
+      };
+    }
+
+    // Generate reset token
+    const resetToken = randomBytes(32).toString('hex');
+    const resetTokenExpires = new Date(Date.now() + 3600000); // 1 hour from now
+
+    // Save reset token to user
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        resetToken,
+        resetTokenExpires,
+      },
+    });
+
+    // Send password reset email
+    await this.mailService.sendPasswordReset(user.email, resetToken);
+
+    return {
+      message: 'If an account exists with this email, you will receive a password reset link.',
+    };
   }
 }

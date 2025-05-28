@@ -26,16 +26,9 @@ export const configuration = () => ({
     rateLimitTimeWindow: 15 * 60 * 1000, // 15 minutes
     bcryptSaltRounds: 12,
   },
-  mailer: {
-    host: process.env.MAILTRAP_HOST,
-    port: parseInt(process.env.MAILTRAP_PORT || '2525', 10),
-    auth: {
-      user: process.env.MAILTRAP_USER,
-      pass: process.env.MAILTRAP_PASS,
-    },
-    from: {
-      name: process.env.MAILTRAP_FROM_NAME || 'KYM System',
-      email: process.env.MAILTRAP_FROM_EMAIL || 'no-reply@thecasualtech.com',
-    },
+  brevo: {
+    apiKey: process.env.BREVO_API_KEY,
+    fromName: process.env.BREVO_FROM_NAME || 'KYM System',
+    fromEmail: process.env.BREVO_FROM_EMAIL || 'noreply@thecasualtech.com',
   },
 });
