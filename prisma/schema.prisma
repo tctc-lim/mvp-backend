@@ -86,6 +86,30 @@ enum ConversionStatus {
   REDEDICATED    // For existing believers who rededicated their lives
 }
 
+// Add new enums
+enum InterestCategory {
+  FREE_SKILLS
+  MOVIE_ACADEMY
+  SHOP_FOR_FREE
+  FREE_CENTER_FOR_EDUCATION
+  FREE_SPORTS_ACADEMY
+}
+
+enum EducationLevel {
+  PRIMARY
+  SSCE
+  GRADUATE
+  POST_GRADUATE
+}
+
+enum AgeRange {
+  AGE_15_20
+  AGE_21_30
+  AGE_31_40
+  AGE_41_50
+  AGE_51_ABOVE
+}
+
 // Member model for church members
 model Member {
   id              String           @id @default(uuid())
@@ -98,8 +122,8 @@ model Member {
   conversionStatus ConversionStatus @default(NOT_CONVERTED)
   zone            Zone             @relation(fields: [zoneId], references: [id])
   zoneId          String
-  cell            Cell?            @relation(fields: [cellId], references: [id])
-  cellId          String?
+  cell            Cell             @relation(fields: [cellId], references: [id])
+  cellId          String
   firstVisit      DateTime         @default(now())
   lastVisit       DateTime         @default(now())
   prayerRequest   String?
@@ -110,6 +134,15 @@ model Member {
   conversionDate  DateTime?        // When they became a new convert
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
+  attendance      Attendance[]
+  notes           Note[]
+  
+  // New fields
+  interests       InterestCategory[]
+  educationLevel  EducationLevel?
+  ageRange        AgeRange?
+  birthDate       DateTime?  // Stores only day and month
+  badComment      String?         // For negative feedback or concerns
 
   @@index([phone])
   @@index([status])
@@ -117,6 +150,9 @@ model Member {
   @@index([cellId])
   @@index([conversionStatus])
   @@index([lastVisit])
+  @@index([interests])
+  @@index([educationLevel])
+  @@index([ageRange])
 }
 
 enum FollowUpType {
@@ -216,4 +252,27 @@ model RefreshToken {
   @@index([userId])
   @@index([token])
   @@index([expiresAt])
+}
+
+model Attendance {
+  id        String   @id @default(uuid())
+  member    Member   @relation(fields: [memberId], references: [id])
+  memberId  String
+  date      DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([memberId])
+  @@index([date])
+}
+
+model Note {
+  id        String   @id @default(uuid())
+  member    Member   @relation(fields: [memberId], references: [id])
+  memberId  String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([memberId])
 }
