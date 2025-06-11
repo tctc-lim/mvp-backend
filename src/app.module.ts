@@ -13,6 +13,7 @@ import { MilestoneModule } from './modules/milestone/milestone.module';
 import { MemberModule } from './modules/member/member.module';
 import { ZonesModule } from './modules/zones/zones.module';
 import { MailModule } from './mail/mail.module';
+import { CellsModule } from './modules/cells/cells.module';
 import { configuration } from './config/configuration';
 import { loggerConfig } from './config/logger.config';
 import { throttlerConfig } from './config/throttler.config';
@@ -56,6 +57,7 @@ import { throttlerConfig } from './config/throttler.config';
     FollowupModule,
     DepartmentModule,
     MilestoneModule,
+    CellsModule,
   ],
   providers: [
     {
