@@ -5,6 +5,9 @@
   "author": "",
   "private": true,
   "license": "UNLICENSED",
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
+  },
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
@@ -25,6 +28,7 @@
     "db:sync": "npm run db:migrate:dev && npm run db:migrate:prod",
     "db:studio:dev": "dotenv -e .env.development prisma studio",
     "db:studio:prod": "dotenv -e .env.production prisma studio",
+    "db:seed": "prisma db seed",
     "prepare": "husky"
   },
   "dependencies": {

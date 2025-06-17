@@ -17,7 +17,7 @@ import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { MarkAttendanceDto } from './dto/mark-attendance.dto';
 import { Roles } from 'src/common/decorators/roles.decorator';
-import { UserRole } from '@prisma/client';
+import { UserRole, MemberStatus, ConversionStatus } from '@prisma/client';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 
 @ApiTags('members')
@@ -27,6 +27,7 @@ export class MemberController {
   constructor(private readonly memberService: MemberService) {}
 
   @Post()
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @ApiOperation({ summary: 'Create a new member' })
   @ApiResponse({ status: 201, description: 'Member created successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
@@ -35,10 +36,21 @@ export class MemberController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all members' })
-  @ApiResponse({ status: 200, description: 'Return all members' })
-  findAll() {
-    return this.memberService.findAll({});
+  @ApiOperation({ summary: 'Get all members with filters' })
+  @ApiResponse({ status: 200, description: 'Return filtered list of members' })
+  @ApiQuery({ name: 'status', required: false, enum: MemberStatus })
+  @ApiQuery({ name: 'conversionStatus', required: false, enum: ConversionStatus })
+  @ApiQuery({ name: 'zoneId', required: false })
+  @ApiQuery({ name: 'cellId', required: false })
+  @ApiQuery({ name: 'search', required: false })
+  @ApiQuery({ name: 'firstVisitStart', required: false })
+  @ApiQuery({ name: 'firstVisitEnd', required: false })
+  @ApiQuery({ name: 'lastVisitStart', required: false })
+  @ApiQuery({ name: 'lastVisitEnd', required: false })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'offset', required: false, type: Number })
+  findAll(@Query() query: MemberQueryDto) {
+    return this.memberService.findAll(query);
   }
 
   @Get(':id')
@@ -63,22 +75,6 @@ export class MemberController {
   @ApiResponse({ status: 404, description: 'Member not found' })
   remove(@Param('id') id: string) {
     return this.memberService.remove(id);
-  }
-
-  @Post('register')
-  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
-  @ApiOperation({ summary: 'Register a new member' })
-  @ApiResponse({ status: 201, description: 'Member successfully registered' })
-  @ApiResponse({ status: 409, description: 'Email already exists' })
-  async createMember(@Body() createMemberDto: CreateMemberDto) {
-    return this.memberService.create(createMemberDto);
-  }
-
-  @Get('all')
-  @ApiOperation({ summary: 'Get all members with filters' })
-  @ApiResponse({ status: 200, description: 'Return filtered list of members' })
-  async getAllMembers(@Query() query: MemberQueryDto) {
-    return this.memberService.findAll(query);
   }
 
   @Post(':id/attendance')
