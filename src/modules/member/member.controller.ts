@@ -53,6 +53,15 @@ export class MemberController {
     return this.memberService.findAll(query);
   }
 
+  @Get('search')
+  @ApiOperation({ summary: 'Search members by phone or email' })
+  @ApiResponse({ status: 200, description: 'Return matching members' })
+  @ApiQuery({ name: 'phone', required: false })
+  @ApiQuery({ name: 'email', required: false })
+  search(@Query('phone') phone?: string, @Query('email') email?: string) {
+    return this.memberService.searchExistingMember(phone, email);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get a member by id' })
   @ApiResponse({ status: 200, description: 'Return the member' })
@@ -85,14 +94,5 @@ export class MemberController {
   @ApiResponse({ status: 404, description: 'Member not found' })
   markAttendance(@Param('id') id: string, @Body() markAttendanceDto: MarkAttendanceDto) {
     return this.memberService.markAttendance(id, markAttendanceDto);
-  }
-
-  @Get('search')
-  @ApiOperation({ summary: 'Search members by phone or email' })
-  @ApiResponse({ status: 200, description: 'Return matching members' })
-  @ApiQuery({ name: 'phone', required: false })
-  @ApiQuery({ name: 'email', required: false })
-  search(@Query('phone') phone?: string, @Query('email') email?: string) {
-    return this.memberService.searchExistingMember(phone, email);
   }
 }
