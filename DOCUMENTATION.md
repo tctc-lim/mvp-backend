@@ -661,3 +661,165 @@ For any questions or issues, please refer to the team lead or technical document
 
 
 
+###updates (March 16, 2025)
+
+# Church KYC System - Member API Documentation
+
+## Overview
+This document outlines the available REST API endpoints for managing church members.
+
+## Base URL: http://localhost:3000/members
+
+1. Create a Member
+POST (http://localhost:3000/members)
+Headers {
+  "Content-Type": "application/json"
+}
+Body
+{
+  "name": "John Doe",
+  "email": "johndoe@example.com",
+  "phone": "1234567890",
+  "address": "123 Church Street",
+  "gender": "Male",
+  "status": "FIRST_TIMER",
+  "conversionStatus": "NOT_CONVERTED",
+  "zoneId": "zone-123",
+  "cellId": "cell-456",
+  "sundayAttendance": 2
+}
+
+2. Get All Members
+GET (http://localhost:3000/members)
+Headers {
+  "Content-Type": "application/json"
+}
+
+3. Get A Single Member
+GET (http://localhost:3000/members/{id})
+Headers {
+  "Content-Type": "application/json"
+}
+
+4. Update A Member 
+PATCH (http://localhost:3000/members/{id})
+Headers {
+  "Content-Type": "application/json"
+}
+Body {
+  "name": "John Updated",
+  "phone": "9999999999",
+  "status": "FULL_MEMBER"
+}
+
+5. Delete A Member 
+DELETE (http://localhost:3000/members/{id})
+Headers {
+  "Content-Type": "application/json"
+}
+
+
+Error Responses
+For all endpoints, errors follow this format:
+{
+  "statusCode": 400,
+  "message": "Validation error message",
+  "error": "Bad Request"
+}
+Possible Errors
+400 Bad Request: Invalid request body
+404 Not Found: Member ID does not exist
+500 Internal Server Error: Unexpected server error
+=======
+### updates (March 16, 2025)
+
+1. 1. Role-Based Access Control (RBAC) Implementation
+We implemented a role-based access control (RBAC) system to ensure only authorized users can perform certain actions.
+
+New Authorization Middleware:
+Ensures that:
+Only SUPER_ADMIN users can register new users.
+Users must change their password on first login before proceeding.
+
+We created and improved the CRUD operations for managing users in the Church KYC System. Below are the API endpoints, required headers, and request bodies.
+
+### 1. Register a User(Authorized by super admins only)
+```bash
+curl -X POST http://localhost:3000/api/auth/register \
+  -H "Content-Type: application/json",
+      Authorization: bearer token \
+  -d '{
+    "email": "admin@example.com",
+    "password": "password123",
+    "name": "Admin User",
+    "role": "SUPER_ADMIN"
+  }'
+```
+
+### 2. Login
+```bash
+curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "admin@example.com",
+    "password": "password123",
+  }'
+```
+
+### 3. Get All Users
+```bash
+curl -X GET http://localhost:3000/api/auth/users \
+  -H "Content-Type: application/json" \
+```
+
+### 4. Update a user credential
+```bash
+curl -X PUT http://localhost:3000/api/auth/update:id \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "admin@example.com",
+    "password": "password123",
+    "name": "Admin User",
+    "role": "SUPER_ADMIN"
+  }'
+```
+
+### 5. Delete A User
+```bash
+curl -X DELETE http://localhost:3000/api/auth/delete:id \
+  -H "Content-Type: application/json" \
+```
+
+
+2.Database & Deployment Updates
+
+- New environment variables for better configuration:
+JWT_SECRET="your-jwt-secret"
+DATABASE_URL="your database url"
+DIRECT_URL="your direct url"
+MAIL_HOST="smtp.gmail.com"
+MAIL_PORT = 465
+MAIL_USER="example@gmail.com"
+MAIL_PASSWORD="your-app-password"
+MAIL_FROM="Church KYC <your-gmail>"
+
+- Database migrations applied: npx prisma generate
+
+
+
+3. Email Notification System
+Implemented automated email notifications for New user registration (credentials sent via email).
+
+Example Email Notification Format:
+Subject: Welcome to the Church KYC System  
+Hello [User],  
+You have been registered in the system with the role: [Role].  
+Your login credentials:  
+Email: [Email]  
+Temporary Password: [Generated Password]  
+Please change your password upon first login.  
+
+
+
+
+

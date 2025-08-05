@@ -1,0 +1,421 @@
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
+import { PrismaService } from '../../prisma/prisma.service';
+import { CreateMemberDto } from './dto/create-member.dto';
+import { UpdateMemberDto } from './dto/update-member.dto';
+import { MemberQueryDto } from './dto/member-query.dto';
+import { MarkAttendanceDto } from './dto/mark-attendance.dto';
+import { MemberStatus, ConversionStatus, Prisma } from '@prisma/client';
+
+@Injectable()
+export class MemberService {
+  constructor(private prisma: PrismaService) {}
+
+  // Helper function to convert DD-MM to Date
+  private convertBirthDate(birthDate: string): Date | null {
+    if (!birthDate) return null;
+    const [day, month] = birthDate.split('-');
+    const date = new Date();
+    date.setMonth(parseInt(month) - 1); // Month is 0-based
+    date.setDate(parseInt(day));
+    return date;
+  }
+
+  // ✅ Create a new member (Ensuring email uniqueness)
+  async create(createMemberDto: CreateMemberDto) {
+    const {
+      name,
+      email,
+      phone,
+      address,
+      gender,
+      zoneId,
+      cellId,
+      status,
+      conversionStatus,
+      sundayAttendance,
+      firstVisitDate,
+      conversionDate,
+      prayerRequest,
+      interests,
+      educationLevel,
+      ageRange,
+      birthDate,
+      badComment,
+    } = createMemberDto;
+
+    // Check for existing member with the same email
+    if (email) {
+      const existingMember = await this.prisma.member.findUnique({
+        where: { email },
+      });
+
+      if (existingMember) {
+        throw new ConflictException('A member with this email already exists.');
+      }
+    }
+
+    // Set first visit date if provided, otherwise use current date
+    const firstVisit = firstVisitDate ? new Date(firstVisitDate) : new Date();
+    const lastVisit = firstVisit;
+
+    // Create member with required cell relationship
+    const member = await this.prisma.member.create({
+      data: {
+        name,
+        email,
+        phone,
+        address,
+        gender,
+        firstVisit,
+        lastVisit,
+        conversionDate: conversionDate ? new Date(conversionDate) : null,
+        status: status || MemberStatus.FIRST_TIMER,
+        conversionStatus: conversionStatus || ConversionStatus.NOT_CONVERTED,
+        sundayAttendance: sundayAttendance || 0,
+        zone: {
+          connect: { id: zoneId },
+        },
+        cell: {
+          connect: { id: cellId },
+        },
+        prayerRequest,
+        interests: interests || [],
+        educationLevel,
+        ageRange,
+        birthDate: birthDate ? this.convertBirthDate(birthDate) : null,
+        badComment,
+      },
+      include: {
+        zone: true,
+        cell: true,
+      },
+    });
+
+    // If member has historical data indicating they're not a first timer
+    if (firstVisitDate) {
+      const today = new Date();
+      const daysSinceFirstVisit = Math.floor(
+        (today.getTime() - firstVisit.getTime()) / (1000 * 60 * 60 * 24),
+      );
+
+      // If they've been coming for more than a week, they're likely not a first timer
+      if (daysSinceFirstVisit > 7) {
+        await this.prisma.member.update({
+          where: { id: member.id },
+          data: { status: MemberStatus.SECOND_TIMER },
+        });
+        member.status = MemberStatus.SECOND_TIMER;
+      }
+    }
+
+    // If they have Sunday attendance, update status accordingly
+    if (sundayAttendance && sundayAttendance >= 3) {
+      await this.prisma.member.update({
+        where: { id: member.id },
+        data: { status: MemberStatus.FULL_MEMBER },
+      });
+      member.status = MemberStatus.FULL_MEMBER;
+    }
+
+    return member;
+  }
+
+  // ✅ Get all members with filters
+  async findAll(query: MemberQueryDto) {
+    const {
+      status,
+      conversionStatus,
+      zoneId,
+      cellId,
+      search,
+      firstVisitStart,
+      firstVisitEnd,
+      lastVisitStart,
+      lastVisitEnd,
+      limit = 10,
+      offset = 0,
+    } = query;
+
+    const where: Prisma.MemberWhereInput = {};
+
+    if (status) {
+      where.status = status;
+    }
+
+    if (conversionStatus) {
+      where.conversionStatus = conversionStatus;
+    }
+
+    if (zoneId) {
+      where.zoneId = zoneId;
+    }
+
+    if (cellId) {
+      where.cellId = cellId;
+    }
+
+    if (firstVisitStart || firstVisitEnd) {
+      where.firstVisit = {};
+      if (firstVisitStart) {
+        where.firstVisit.gte = new Date(firstVisitStart);
+      }
+      if (firstVisitEnd) {
+        where.firstVisit.lte = new Date(firstVisitEnd);
+      }
+    }
+
+    if (lastVisitStart || lastVisitEnd) {
+      where.lastVisit = {};
+      if (lastVisitStart) {
+        where.lastVisit.gte = new Date(lastVisitStart);
+      }
+      if (lastVisitEnd) {
+        where.lastVisit.lte = new Date(lastVisitEnd);
+      }
+    }
+
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } },
+        { phone: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    const [total, members] = await Promise.all([
+      this.prisma.member.count({ where }),
+      this.prisma.member.findMany({
+        where,
+        include: {
+          zone: true,
+          cell: true,
+        },
+        take: limit,
+        skip: offset,
+        orderBy: {
+          createdAt: 'desc',
+        },
+      }),
+    ]);
+
+    return {
+      data: members,
+      meta: {
+        total,
+        limit,
+        offset,
+      },
+    };
+  }
+
+  // ✅ Get a single member by ID
+  async findOne(id: string) {
+    const member = await this.prisma.member.findUnique({
+      where: { id },
+      include: {
+        zone: true,
+        cell: true,
+        followUps: true,
+        milestones: true,
+        departments: {
+          include: {
+            department: true,
+          },
+        },
+      },
+    });
+
+    if (!member) {
+      throw new NotFoundException(`Member with ID ${id} not found`);
+    }
+
+    return member;
+  }
+
+  // ✅ Update a member (Ensuring the member exists)
+  async update(id: string, updateMemberDto: UpdateMemberDto) {
+    const {
+      name,
+      email,
+      phone,
+      address,
+      gender,
+      zoneId,
+      cellId,
+      status,
+      conversionStatus,
+      sundayAttendance,
+      firstVisitDate,
+      conversionDate,
+      prayerRequest,
+      interests,
+      educationLevel,
+      ageRange,
+      birthDate,
+      badComment,
+    } = updateMemberDto;
+
+    const member = await this.findOne(id);
+
+    const data: Prisma.MemberUpdateInput = {
+      name,
+      email,
+      phone,
+      address,
+      gender,
+      zone: zoneId ? { connect: { id: zoneId } } : undefined,
+      cell: cellId ? { connect: { id: cellId } } : undefined,
+      status,
+      conversionStatus,
+      sundayAttendance,
+      firstVisit: firstVisitDate ? new Date(firstVisitDate) : undefined,
+      conversionDate: conversionDate ? new Date(conversionDate) : undefined,
+      prayerRequest,
+      interests,
+      educationLevel,
+      ageRange,
+      birthDate: birthDate ? this.convertBirthDate(birthDate) : undefined,
+      badComment,
+    };
+
+    // Handle attendance update
+    if (sundayAttendance !== undefined) {
+      // Update lastVisit to current date when marking attendance
+      data.lastVisit = new Date();
+
+      // If this is a new attendance record, increment the counter
+      if (sundayAttendance > member.sundayAttendance) {
+        data.sundayAttendance = sundayAttendance;
+
+        // Update status based on attendance
+        if (sundayAttendance >= 3) {
+          data.status = MemberStatus.FULL_MEMBER;
+        } else if (sundayAttendance === 2) {
+          data.status = MemberStatus.SECOND_TIMER;
+        }
+      }
+    }
+
+    return this.prisma.member.update({
+      where: { id },
+      data,
+      include: {
+        zone: true,
+        cell: true,
+      },
+    });
+  }
+
+  // ✅ Delete a member (Ensuring the member exists)
+  async remove(id: string) {
+    await this.findOne(id);
+    return this.prisma.member.delete({
+      where: { id },
+    });
+  }
+
+  async markAttendance(id: string, markAttendanceDto: MarkAttendanceDto) {
+    const member = await this.findOne(id);
+    const attendanceDate = markAttendanceDto.attendanceDate
+      ? new Date(markAttendanceDto.attendanceDate)
+      : new Date();
+
+    // Check if attendance was already marked for this date
+    const startOfDay = new Date(attendanceDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(attendanceDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    // If lastVisit is on the same day, attendance was already marked
+    if (member.lastVisit >= startOfDay && member.lastVisit <= endOfDay) {
+      throw new BadRequestException('Attendance already marked for this date');
+    }
+
+    // Increment attendance counter
+    const newAttendanceCount = member.sundayAttendance + 1;
+
+    // Determine new status based on attendance count
+    let newStatus = member.status;
+    if (newAttendanceCount >= 3) {
+      newStatus = MemberStatus.FULL_MEMBER;
+    } else if (newAttendanceCount === 2) {
+      newStatus = MemberStatus.SECOND_TIMER;
+    }
+
+    // Update member with new attendance data
+    return this.prisma.member.update({
+      where: { id },
+      data: {
+        sundayAttendance: newAttendanceCount,
+        lastVisit: attendanceDate,
+        status: newStatus,
+      },
+      include: {
+        zone: true,
+        cell: true,
+      },
+    });
+  }
+
+  async searchExistingMember(phone?: string, email?: string) {
+    if (!phone && !email) {
+      throw new BadRequestException('Either phone or email must be provided');
+    }
+
+    const where: Prisma.MemberWhereInput = {
+      OR: [...(phone ? [{ phone }] : []), ...(email ? [{ email }] : [])],
+    };
+
+    const member = await this.prisma.member.findFirst({
+      where,
+      include: {
+        zone: true,
+        cell: true,
+      },
+    });
+
+    if (!member) {
+      return null;
+    }
+
+    // Return member data with additional context
+    return {
+      exists: true,
+      member,
+      suggestedAction: this.getSuggestedAction(member),
+    };
+  }
+
+  private getSuggestedAction(member: {
+    status: MemberStatus;
+    sundayAttendance: number;
+    conversionStatus: ConversionStatus;
+  }) {
+    const actions = [];
+
+    // Check if member needs status update
+    if (member.status === MemberStatus.FIRST_TIMER && member.sundayAttendance >= 1) {
+      actions.push('UPDATE_TO_SECOND_TIMER');
+    }
+    if (member.status === MemberStatus.SECOND_TIMER && member.sundayAttendance >= 2) {
+      actions.push('UPDATE_TO_FULL_MEMBER');
+    }
+
+    // Check if member needs conversion status update
+    if (member.conversionStatus === ConversionStatus.NOT_CONVERTED) {
+      actions.push('UPDATE_CONVERSION_STATUS');
+    }
+
+    // If no actions needed
+    if (actions.length === 0) {
+      actions.push('NO_ACTION_NEEDED');
+    }
+
+    return actions;
+  }
+}
