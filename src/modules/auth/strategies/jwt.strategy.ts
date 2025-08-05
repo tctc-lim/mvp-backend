@@ -27,14 +27,31 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   validate(payload: JwtPayload): JwtPayload {
-    if (!payload.sub) {
-      throw new UnauthorizedException('Invalid token payload');
+    try {
+      if (!payload.sub) {
+        console.error('Invalid token payload - missing sub:', payload);
+        throw new UnauthorizedException('Invalid token payload - missing user ID');
+      }
+
+      if (!payload.email) {
+        console.error('Invalid token payload - missing email:', payload);
+        throw new UnauthorizedException('Invalid token payload - missing email');
+      }
+
+      if (!payload.role) {
+        console.error('Invalid token payload - missing role:', payload);
+        throw new UnauthorizedException('Invalid token payload - missing role');
+      }
+
+      return {
+        sub: payload.sub,
+        email: payload.email,
+        role: payload.role,
+        mustChangePassword: payload.mustChangePassword,
+      };
+    } catch (error) {
+      console.error('JWT validation error:', error);
+      throw error;
     }
-    return {
-      sub: payload.sub,
-      email: payload.email,
-      role: payload.role,
-      mustChangePassword: payload.mustChangePassword,
-    };
   }
 }
