@@ -4,6 +4,6 @@ import { ZonesService } from './zones.service';
 
 @Module({
   controllers: [ZonesController],
-  providers: [ZonesService]
+  providers: [ZonesService],
 })
 export class ZonesModule {}

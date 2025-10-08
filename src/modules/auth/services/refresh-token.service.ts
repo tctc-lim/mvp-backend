@@ -14,10 +14,19 @@ export class RefreshTokenService {
 
   async createRefreshToken(userId: string): Promise<string> {
     const refreshExpiration = this.config.get<string>('JWT_REFRESH_EXPIRATION') || '7d';
-    const days = parseInt(refreshExpiration) || 7;
 
+    // Parse the expiration string properly
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + days);
+    if (refreshExpiration.endsWith('d')) {
+      const days = parseInt(refreshExpiration.slice(0, -1)) || 7;
+      expiresAt.setDate(expiresAt.getDate() + days);
+    } else if (refreshExpiration.endsWith('h')) {
+      const hours = parseInt(refreshExpiration.slice(0, -1)) || 168; // 7 days default
+      expiresAt.setHours(expiresAt.getHours() + hours);
+    } else {
+      // Default to 7 days if format is not recognized
+      expiresAt.setDate(expiresAt.getDate() + 7);
+    }
 
     // Clean up old tokens for this user before creating new one
     await this.cleanupUserTokens(userId);
@@ -83,18 +92,33 @@ export class RefreshTokenService {
   async rotateRefreshToken(oldToken: string): Promise<{ token: string; accessToken: string }> {
     const { userId } = await this.validateRefreshToken(oldToken);
 
-    // Revoke the old token
-    await this.revokeRefreshToken(oldToken);
+    // Get user data
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
 
-    // Create new refresh token
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    // Create new refresh token first
     const newRefreshToken = await this.createRefreshToken(userId);
 
-    // Create new access token
-    const payload = { sub: userId };
+    // Create new access token with full user data
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      mustChangePassword: user.mustChangePassword,
+    };
+
     const accessToken = await this.jwtService.signAsync(payload, {
       secret: this.config.get('JWT_SECRET'),
       expiresIn: this.config.get('JWT_EXPIRATION') || '15m',
     });
+
+    // Only revoke the old token after successfully creating new ones
+    await this.revokeRefreshToken(oldToken);
 
     return {
       token: newRefreshToken,

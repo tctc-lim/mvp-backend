@@ -23,6 +23,7 @@ module.exports = {
         '@typescript-eslint/no-explicit-any': 'warn',
         '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
         '@typescript-eslint/no-empty-function': 'warn',
+        '@typescript-eslint/await-thenable': 'off',
         'require-await': 'error',
         'no-return-await': 'error',
         'prettier/prettier': ['error', { endOfLine: 'auto' }],

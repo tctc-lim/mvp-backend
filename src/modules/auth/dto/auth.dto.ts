@@ -9,6 +9,7 @@ import {
 } from 'class-validator';
 import { UserRole } from '@prisma/client';
 import { ApiProperty } from '@nestjs/swagger';
+import { Transform, TransformFnParams } from 'class-transformer';
 
 export class ResetPasswordDto {
   @ApiProperty()
@@ -33,10 +34,11 @@ export class RegisterDto {
   @IsNotEmpty()
   email!: string;
 
-  @ApiProperty()
+  @ApiProperty({ required: false })
+  @IsOptional()
   @IsString()
   @MinLength(8)
-  password!: string;
+  password?: string;
 
   @ApiProperty()
   @IsString()
@@ -62,23 +64,36 @@ export class LoginDto {
 
 export class UpdateUserDto {
   @ApiProperty({ required: false })
+  @IsOptional()
   @IsString()
+  @Transform(({ value }: TransformFnParams): string | undefined =>
+    typeof value === 'string' ? value.trim() : undefined,
+  )
   name?: string;
 
   @ApiProperty({ required: false })
+  @IsOptional()
   @IsEmail()
+  @Transform(({ value }: TransformFnParams): string | undefined =>
+    typeof value === 'string' ? value.trim() : undefined,
+  )
   email?: string;
 
   @ApiProperty({ required: false })
+  @IsOptional()
   @IsString()
   password?: string;
 
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
-  phone?: string; // ✅ Added phone number field
+  @Transform(({ value }: TransformFnParams): string | undefined =>
+    typeof value === 'string' ? value.trim() : undefined,
+  )
+  phone?: string;
 
   @ApiProperty({ enum: UserRole, required: false })
+  @IsOptional()
   @IsEnum(UserRole)
   role?: UserRole;
 }
@@ -96,4 +111,11 @@ export class ChangePasswordDto {
     message: 'Password must contain at least one letter and one number',
   })
   newPassword!: string;
+}
+
+export class ForgotPasswordDto {
+  @ApiProperty()
+  @IsEmail()
+  @IsNotEmpty()
+  email!: string;
 }

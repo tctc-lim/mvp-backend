@@ -20,6 +20,7 @@ import {
   UpdateUserDto,
   ResetPasswordDto,
   ChangePasswordDto,
+  ForgotPasswordDto,
 } from './dto/auth.dto';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Roles } from 'src/common/decorators/roles.decorator';
@@ -106,14 +107,19 @@ export class AuthController {
   })
   @ApiResponse({ status: 401, description: 'Invalid or expired refresh token' })
   async refreshToken(@Body() refreshTokenDto: RefreshTokenDto): Promise<TokenResponseDto> {
-    const { token, accessToken } = await this.refreshTokenService.rotateRefreshToken(
-      refreshTokenDto.refreshToken,
-    );
+    try {
+      const { token, accessToken } = await this.refreshTokenService.rotateRefreshToken(
+        refreshTokenDto.refreshToken,
+      );
 
-    return {
-      accessToken,
-      refreshToken: token,
-    };
+      return {
+        accessToken,
+        refreshToken: token,
+      };
+    } catch (error) {
+      console.error('Token refresh failed:', error);
+      throw error;
+    }
   }
 
   @Version('1')
@@ -133,5 +139,30 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Current password is incorrect' })
   async changePassword(@Request() req: RequestWithUser, @Body() dto: ChangePasswordDto) {
     return this.authService.changePassword(req.user.sub, dto);
+  }
+
+  @Version('1')
+  @Post('forgot-password')
+  @ApiOperation({ summary: 'Request password reset' })
+  @ApiResponse({ status: 200, description: 'Password reset email sent' })
+  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(forgotPasswordDto.email);
+  }
+
+  @Version('1')
+  @Get('debug/token')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Debug endpoint to verify token validity' })
+  @ApiResponse({ status: 200, description: 'Token is valid' })
+  debugToken(@Request() req: RequestWithUser) {
+    return {
+      message: 'Token is valid',
+      user: {
+        id: req.user.sub,
+        email: req.user.email,
+        role: req.user.role,
+      },
+      timestamp: new Date().toISOString(),
+    };
   }
 }

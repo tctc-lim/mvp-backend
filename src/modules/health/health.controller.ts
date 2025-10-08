@@ -21,7 +21,6 @@ export class HealthController {
       // Use the current request URL as base URL
       const port = process.env.PORT || 3000;
       const baseUrl = `http://localhost:${port}`;
-
       return {
         status: 'ok',
         timestamp: new Date().toISOString(),
@@ -38,7 +37,7 @@ export class HealthController {
         },
         cors: {
           origin: this.configService.get('cors.origin') || '*',
-        }
+        },
       };
     } catch (error: unknown) {
       return {
@@ -52,7 +51,7 @@ export class HealthController {
           status: 'disconnected',
           url: process.env.DATABASE_URL?.replace(/:[^:@]+@/, ':****@'), // Mask password
           error: error instanceof Error ? error.message : 'Unknown error',
-        }
+        },
       };
     }
   }

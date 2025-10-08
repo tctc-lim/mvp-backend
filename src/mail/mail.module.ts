@@ -9,7 +9,7 @@ import { MailService } from './mail.service';
     MailerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: async (configService: ConfigService) => ({
+      useFactory: (configService: ConfigService) => ({
         transport: {
           host: configService.get<string>('MAILTRAP_HOST'),
           port: configService.get<number>('MAILTRAP_PORT'),
@@ -25,6 +25,6 @@ import { MailService } from './mail.service';
     }),
   ],
   providers: [MailService],
-  exports: [MailService], // ✅ Export so other modules can use it
+  exports: [MailService],
 })
 export class MailModule {}
