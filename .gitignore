@@ -12,3 +12,4 @@ node_modules
 
 # Markdown files
 *.md
+.env.local
