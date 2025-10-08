@@ -371,24 +371,106 @@ export class MemberService {
       OR: [...(phone ? [{ phone }] : []), ...(email ? [{ email }] : [])],
     };
 
-    const member = await this.prisma.member.findFirst({
+    // Find ALL matching members (not just first)
+    const members = await this.prisma.member.findMany({
       where,
       include: {
         zone: true,
         cell: true,
       },
+      orderBy: {
+        createdAt: 'desc', // Most recent first
+      },
     });
 
-    if (!member) {
+    if (!members || members.length === 0) {
       return null;
     }
 
-    // Return member data with additional context
+    // Analyze the matches
+    const analysis = this.analyzeMemberMatches(members, phone, email);
+
     return {
       exists: true,
-      member,
-      suggestedAction: this.getSuggestedAction(member),
+      matchCount: members.length,
+      members,
+      analysis,
+      suggestedActions: members.map((member) => this.getSuggestedAction(member)),
     };
+  }
+
+  private analyzeMemberMatches(
+    members: {
+      createdAt: Date;
+      name: string;
+      cellId: string;
+      zoneId: string;
+      phone: string;
+      email: string | null;
+    }[],
+    phone?: string,
+    email?: string,
+  ) {
+    const analysis = {
+      isSharedContact: false,
+      isPotentialDuplicate: false,
+      riskLevel: 'LOW' as 'LOW' | 'MEDIUM' | 'HIGH',
+      recommendations: [] as string[],
+    };
+
+    // Check for shared contact patterns
+    if (members.length > 1) {
+      analysis.isSharedContact = true;
+
+      // Check if same name (potential duplicate)
+      const names = members.map((m) => m.name.toLowerCase().trim());
+      const uniqueNames = new Set(names);
+
+      if (uniqueNames.size < members.length) {
+        analysis.isPotentialDuplicate = true;
+        analysis.riskLevel = 'HIGH';
+        analysis.recommendations.push('Multiple members with same name found - likely duplicate');
+      } else {
+        analysis.riskLevel = 'MEDIUM';
+        analysis.recommendations.push(
+          'Shared contact info detected - verify if this is intentional',
+        );
+      }
+
+      // Additional analysis based on search criteria
+      if (phone && members.some((m) => m.phone === phone)) {
+        analysis.recommendations.push(
+          'Phone number match found - verify if this is a family member',
+        );
+      }
+      if (email && members.some((m) => m.email === email)) {
+        analysis.recommendations.push(
+          'Email address match found - verify if this is a family member',
+        );
+      }
+
+      // Check for same family patterns
+      const sameCell = members.every((m) => m.cellId === members[0].cellId);
+      const sameZone = members.every((m) => m.zoneId === members[0].zoneId);
+
+      if (sameCell || sameZone) {
+        analysis.recommendations.push('Members are in same cell/zone - likely family members');
+      }
+    }
+
+    // Check for recent registrations (potential spam/duplicate)
+    const recentMembers = members.filter((m) => {
+      const daysSinceCreation =
+        (Date.now() - new Date(m.createdAt).getTime()) / (1000 * 60 * 60 * 24);
+      return daysSinceCreation < 7; // Within last week
+    });
+
+    if (recentMembers.length > 0) {
+      analysis.riskLevel = 'HIGH';
+      analysis.recommendations.push('Recent registration found - verify if this is a duplicate');
+    }
+
+    return analysis;
   }
 
   private getSuggestedAction(member: {
@@ -402,7 +484,9 @@ export class MemberService {
     if (member.status === MemberStatus.FIRST_TIMER && member.sundayAttendance >= 1) {
       actions.push('UPDATE_TO_SECOND_TIMER');
     }
-    if (member.status === MemberStatus.SECOND_TIMER && member.sundayAttendance >= 2) {
+
+    // Always allow manual promotion to full member (for sneaky users or manual overrides)
+    if (member.status !== MemberStatus.FULL_MEMBER) {
       actions.push('UPDATE_TO_FULL_MEMBER');
     }
 
