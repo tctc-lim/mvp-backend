@@ -10,6 +10,10 @@ node_modules
 .env.production.local
 .env.development.local
 
+# Logs
+logs/
+*.log
+
 # Markdown files
 *.md
 .env.local
