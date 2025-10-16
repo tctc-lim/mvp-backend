@@ -133,6 +133,11 @@ export class MemberService {
       zoneId,
       cellId,
       search,
+      gender,
+      ageRange,
+      educationLevel,
+      interests,
+      birthMonth,
       firstVisitStart,
       firstVisitEnd,
       lastVisitStart,
@@ -159,23 +164,63 @@ export class MemberService {
       where.cellId = cellId;
     }
 
+    if (gender) {
+      where.gender = gender;
+    }
+
+    if (ageRange) {
+      where.ageRange = ageRange;
+    }
+
+    if (educationLevel) {
+      where.educationLevel = educationLevel;
+    }
+
+    if (interests) {
+      where.interests = {
+        has: interests,
+      };
+    }
+
+    // Birth month filtering will be done post-query due to Prisma Date field limitations
+
     if (firstVisitStart || firstVisitEnd) {
       where.firstVisit = {};
       if (firstVisitStart) {
-        where.firstVisit.gte = new Date(firstVisitStart);
+        const startDate = new Date(firstVisitStart);
+        where.firstVisit.gte = startDate;
+
+        // If only start is provided (no end), treat it as a specific date
+        if (!firstVisitEnd) {
+          const endOfDay = new Date(startDate);
+          endOfDay.setHours(23, 59, 59, 999);
+          where.firstVisit.lte = endOfDay;
+        }
       }
       if (firstVisitEnd) {
-        where.firstVisit.lte = new Date(firstVisitEnd);
+        const endDate = new Date(firstVisitEnd);
+        endDate.setHours(23, 59, 59, 999);
+        where.firstVisit.lte = endDate;
       }
     }
 
     if (lastVisitStart || lastVisitEnd) {
       where.lastVisit = {};
       if (lastVisitStart) {
-        where.lastVisit.gte = new Date(lastVisitStart);
+        const startDate = new Date(lastVisitStart);
+        where.lastVisit.gte = startDate;
+
+        // If only start is provided (no end), treat it as a specific date
+        if (!lastVisitEnd) {
+          const endOfDay = new Date(startDate);
+          endOfDay.setHours(23, 59, 59, 999);
+          where.lastVisit.lte = endOfDay;
+        }
       }
       if (lastVisitEnd) {
-        where.lastVisit.lte = new Date(lastVisitEnd);
+        const endDate = new Date(lastVisitEnd);
+        endDate.setHours(23, 59, 59, 999);
+        where.lastVisit.lte = endDate;
       }
     }
 
@@ -187,7 +232,7 @@ export class MemberService {
       ];
     }
 
-    const [total, members] = await Promise.all([
+    const [total, allMembers] = await Promise.all([
       this.prisma.member.count({ where }),
       this.prisma.member.findMany({
         where,
@@ -203,10 +248,20 @@ export class MemberService {
       }),
     ]);
 
+    // Post-query filtering for birth month (Prisma limitation with Date fields)
+    let members = allMembers;
+    if (birthMonth) {
+      const monthNum = parseInt(birthMonth);
+      members = allMembers.filter((member) => {
+        if (!member.birthDate) return false;
+        return member.birthDate.getMonth() + 1 === monthNum;
+      });
+    }
+
     return {
       data: members,
       meta: {
-        total,
+        total: birthMonth ? members.length : total,
         limit,
         offset,
       },
