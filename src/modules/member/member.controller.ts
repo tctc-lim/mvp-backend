@@ -8,8 +8,11 @@ import {
   UseGuards,
   Query,
   Patch,
+  Res,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { MemberService } from './member.service';
+import { MemberExportService } from './services/member-export.service';
 import { CreateMemberDto } from './dto/create-member.dto';
 import { UpdateMemberDto } from './dto/update-member.dto';
 import { MemberQueryDto } from './dto/member-query.dto';
@@ -24,7 +27,10 @@ import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 @Controller('members')
 @UseGuards(JwtAuthGuard, RolesGuard) // Ensure JWT and Role Checks
 export class MemberController {
-  constructor(private readonly memberService: MemberService) {}
+  constructor(
+    private readonly memberService: MemberService,
+    private readonly exportService: MemberExportService,
+  ) {}
 
   @Post()
   @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
@@ -99,5 +105,69 @@ export class MemberController {
   @ApiResponse({ status: 404, description: 'Member not found' })
   markAttendance(@Param('id') id: string, @Body() markAttendanceDto: MarkAttendanceDto) {
     return this.memberService.markAttendance(id, markAttendanceDto);
+  }
+
+  @Get('export/excel')
+  @ApiOperation({ summary: 'Export filtered members to Excel' })
+  @ApiResponse({ status: 200, description: 'Excel file generated successfully' })
+  @ApiQuery({ name: 'status', required: false, enum: MemberStatus })
+  @ApiQuery({ name: 'conversionStatus', required: false, enum: ConversionStatus })
+  @ApiQuery({ name: 'zoneId', required: false })
+  @ApiQuery({ name: 'cellId', required: false })
+  @ApiQuery({ name: 'search', required: false })
+  @ApiQuery({ name: 'gender', required: false })
+  @ApiQuery({ name: 'ageRange', required: false })
+  @ApiQuery({ name: 'educationLevel', required: false })
+  @ApiQuery({ name: 'interests', required: false })
+  @ApiQuery({ name: 'birthMonth', required: false })
+  @ApiQuery({ name: 'firstVisitStart', required: false })
+  @ApiQuery({ name: 'firstVisitEnd', required: false })
+  @ApiQuery({ name: 'lastVisitStart', required: false })
+  @ApiQuery({ name: 'lastVisitEnd', required: false })
+  async exportToExcel(@Query() query: MemberQueryDto, @Res() res: Response) {
+    const result = await this.memberService.findAll({ ...query, limit: 10000, offset: 0 });
+    const buffer = await this.exportService.exportToExcel(result.data);
+
+    const filename = `members_export_${new Date().toISOString().split('T')[0]}.xlsx`;
+
+    res.set({
+      'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+      'Content-Length': buffer.length,
+    });
+
+    res.send(buffer);
+  }
+
+  @Get('export/pdf')
+  @ApiOperation({ summary: 'Export filtered members to PDF' })
+  @ApiResponse({ status: 200, description: 'PDF file generated successfully' })
+  @ApiQuery({ name: 'status', required: false, enum: MemberStatus })
+  @ApiQuery({ name: 'conversionStatus', required: false, enum: ConversionStatus })
+  @ApiQuery({ name: 'zoneId', required: false })
+  @ApiQuery({ name: 'cellId', required: false })
+  @ApiQuery({ name: 'search', required: false })
+  @ApiQuery({ name: 'gender', required: false })
+  @ApiQuery({ name: 'ageRange', required: false })
+  @ApiQuery({ name: 'educationLevel', required: false })
+  @ApiQuery({ name: 'interests', required: false })
+  @ApiQuery({ name: 'birthMonth', required: false })
+  @ApiQuery({ name: 'firstVisitStart', required: false })
+  @ApiQuery({ name: 'firstVisitEnd', required: false })
+  @ApiQuery({ name: 'lastVisitStart', required: false })
+  @ApiQuery({ name: 'lastVisitEnd', required: false })
+  async exportToPDF(@Query() query: MemberQueryDto, @Res() res: Response) {
+    const result = await this.memberService.findAll({ ...query, limit: 10000, offset: 0 });
+    const buffer = await this.exportService.exportToPDF(result.data);
+
+    const filename = `members_export_${new Date().toISOString().split('T')[0]}.pdf`;
+
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+      'Content-Length': buffer.length,
+    });
+
+    res.send(buffer);
   }
 }
