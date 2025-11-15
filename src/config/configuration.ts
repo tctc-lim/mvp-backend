@@ -5,7 +5,7 @@ export const configuration = () => ({
   },
   jwt: {
     secret: process.env.JWT_SECRET,
-    expiresIn: process.env.JWT_EXPIRATION || '15m',
+    expiresIn: process.env.JWT_EXPIRATION || '3h', // 3 hours - good balance of security and UX
     refreshExpiresIn: process.env.JWT_REFRESH_EXPIRATION || '7d',
   },
   environment: process.env.NODE_ENV || 'development',

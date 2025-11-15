@@ -15,7 +15,7 @@ import { RefreshTokenService } from './services/refresh-token.service';
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
         secret: configService.get('JWT_SECRET'),
-        signOptions: { expiresIn: configService.get('JWT_EXPIRATION', '15m') },
+        signOptions: { expiresIn: configService.get('JWT_EXPIRATION', '3h') },
       }),
       inject: [ConfigService],
     }),
