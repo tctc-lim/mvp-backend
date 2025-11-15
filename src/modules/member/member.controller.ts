@@ -82,9 +82,11 @@ export class MemberController {
   }
 
   @Patch(':id')
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @ApiOperation({ summary: 'Update a member' })
   @ApiResponse({ status: 200, description: 'Member updated successfully' })
   @ApiResponse({ status: 404, description: 'Member not found' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Insufficient permissions' })
   update(@Param('id') id: string, @Body() updateMemberDto: UpdateMemberDto) {
     return this.memberService.update(id, updateMemberDto);
   }
