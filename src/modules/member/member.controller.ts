@@ -90,9 +90,11 @@ export class MemberController {
   }
 
   @Delete(':id')
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @ApiOperation({ summary: 'Delete a member' })
   @ApiResponse({ status: 200, description: 'Member deleted successfully' })
   @ApiResponse({ status: 404, description: 'Member not found' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Insufficient permissions' })
   remove(@Param('id') id: string) {
     return this.memberService.remove(id);
   }
