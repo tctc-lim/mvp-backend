@@ -7,9 +7,13 @@ const { combine, timestamp, printf } = format;
 export const loggerFormat = combine(
   timestamp(),
   printf(({ level, message, timestamp, context, trace }) => {
-    const contextStr = context ? `[${String(context)}]` : '[Application]';
-    const traceStr = trace ? `\nStack Trace: ${String(trace)}` : '';
-    return `${timestamp} ${level}: ${contextStr} ${String(message)}${traceStr}`;
+    const contextStr = context
+      ? `[${typeof context === 'string' ? context : JSON.stringify(context)}]`
+      : '[Application]';
+    const traceStr = trace
+      ? `\nStack Trace: ${typeof trace === 'string' ? trace : JSON.stringify(trace)}`
+      : '';
+    return `${String(timestamp)} ${String(level)}: ${contextStr} ${String(message)}${traceStr}`;
   }),
 );
 
@@ -20,7 +24,12 @@ export const loggerConfig: WinstonModuleOptions = {
         winston.format.timestamp(),
         winston.format.colorize(),
         winston.format.printf(({ level, message, timestamp, context }) => {
-          return `${timestamp} [${context || 'Application'}] ${level}: ${message}`;
+          const contextValue = context
+            ? typeof context === 'string'
+              ? context
+              : JSON.stringify(context)
+            : 'Application';
+          return `${String(timestamp)} [${contextValue}] ${String(level)}: ${String(message)}`;
         }),
       ),
     }),
