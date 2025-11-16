@@ -34,7 +34,7 @@ export class ZonesController {
   }
 
   @Put(':id')
-  @Roles(UserRole.SUPER_ADMIN)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   update(
     @Param('id') id: string,
     @Body() updateZoneDto: UpdateZoneDto,
