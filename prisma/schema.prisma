@@ -201,6 +201,8 @@ model FollowUp {
 model Department {
   id          String            @id @default(uuid())
   name        String
+  hodName     String?           // Head of Department name
+  hodPhone    String?           // Head of Department phone number
   members     MemberDepartment[]
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
